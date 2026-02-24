@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
               </div>
               <h3 className="text-lg font-semibold text-white">Check your email</h3>
               <p className="text-sm text-slate-400">
-                If an account with that National ID and email exists, we've sent a password reset link.
+                If an account with that User ID and email exists, we've sent a password reset link.
                 Please check your inbox and spam folder.
               </p>
               <Link
@@ -69,18 +69,18 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
               <p className="text-sm text-slate-400 mb-2">
-                Enter your National ID and the email address associated with your account. We'll send you a reset link.
+                Enter your User ID and the email address associated with your account. We'll send you a reset link.
               </p>
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  National ID
+                  User ID
                 </label>
                 <input
                   type="text"
                   value={nationalId}
                   onChange={(e) => setNationalId(e.target.value)}
-                  placeholder="Enter your National ID"
+                  placeholder="Enter your User ID"
                   required
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-colors focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30"
                 />

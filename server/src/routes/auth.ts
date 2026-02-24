@@ -61,7 +61,7 @@ router.post("/signup", async (req: Request, res: Response): Promise<void> => {
     if (!existingUser) {
       res.status(404).json({
         error:
-          "No matching record found. Please ensure your National ID and Email are correct.",
+          "No matching record found. Please ensure your User ID and Email are correct.",
       });
       return;
     }
@@ -88,7 +88,7 @@ router.post("/signup", async (req: Request, res: Response): Promise<void> => {
 
     res.status(201).json({
       message:
-        "Account created successfully. Please login with your National ID and password.",
+        "Account created successfully. Please login with your User ID and password.",
     });
   } catch (error) {
     console.error("Signup error:", error);
@@ -102,7 +102,7 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
     const { nationalId, password } = req.body;
 
     if (!nationalId || !password) {
-      res.status(400).json({ error: "National ID and password are required" });
+      res.status(400).json({ error: "User ID and password are required" });
       return;
     }
 
@@ -169,7 +169,7 @@ router.post(
       if (!nationalId || !email) {
         res
           .status(400)
-          .json({ error: "National ID and email are required" });
+          .json({ error: "User ID and email are required" });
         return;
       }
 

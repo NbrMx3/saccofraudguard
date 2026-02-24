@@ -75,13 +75,13 @@ export default function SignupPage() {
           <div className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                National ID
+                User ID
               </label>
               <input
                 type="text"
                 value={form.nationalId}
                 onChange={(e) => update("nationalId", e.target.value)}
-                placeholder="Enter your National ID"
+                placeholder="Enter your User ID"
                 required
                 className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-colors focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30"
               />
