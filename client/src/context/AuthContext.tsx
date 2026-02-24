@@ -46,10 +46,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check session on mount
   const checkSession = useCallback(async () => {
+    const token = localStorage.getItem("sfg-token");
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
     try {
       const { data } = await api.get("/api/auth/me");
       setUser(data.user);
     } catch {
+      localStorage.removeItem("sfg-token");
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -65,6 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       nationalId,
       password,
     });
+    // Store token in localStorage for cross-domain support
+    if (data.token) {
+      localStorage.setItem("sfg-token", data.token);
+    }
     setUser(data.user);
   };
 
@@ -74,7 +84,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await api.post("/api/auth/logout");
+    try {
+      await api.post("/api/auth/logout");
+    } catch {
+      // ignore
+    }
+    localStorage.removeItem("sfg-token");
     setUser(null);
   };
 

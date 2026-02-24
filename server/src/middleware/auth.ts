@@ -15,7 +15,14 @@ export function authenticate(
   res: Response,
   next: NextFunction
 ): void {
-  const token = req.cookies?.token;
+  // Check Authorization header first, then fall back to cookie
+  let token: string | undefined;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.slice(7);
+  } else {
+    token = req.cookies?.token;
+  }
 
   if (!token) {
     res.status(401).json({ error: "Authentication required" });

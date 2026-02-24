@@ -35,9 +35,9 @@ export default function Footer() {
     <footer className="relative bg-slate-950 border-t border-white/5">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Main Footer Content */}
-        <div className="grid gap-12 py-16 lg:grid-cols-5 lg:gap-8">
+        <div className="grid gap-10 py-16 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8">
           {/* Brand Column */}
-          <div className="lg:col-span-2">
+          <div className="sm:col-span-2 lg:col-span-2">
             <a href="/" className="flex items-center gap-2.5 group">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                 <Shield className="h-5 w-5 text-emerald-400" />

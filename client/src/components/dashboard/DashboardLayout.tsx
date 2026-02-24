@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, useMemo, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -37,6 +37,13 @@ export default function DashboardLayout({
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -131,7 +138,7 @@ export default function DashboardLayout({
       {/* Main area */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top navbar */}
-        <header className="flex h-16 items-center justify-between border-b border-white/[0.06] bg-slate-900/50 backdrop-blur-xl px-4 lg:px-6">
+        <header className="flex h-16 items-center justify-between border-b border-white/[0.06] bg-slate-900/50 backdrop-blur-xl px-4 lg:px-6 relative z-30">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -140,7 +147,7 @@ export default function DashboardLayout({
               <Menu className="h-5 w-5" />
             </button>
             <h1 className="text-lg font-semibold text-white hidden sm:block">
-              Dashboard
+              {greeting}, {user?.firstName} 👋
             </h1>
           </div>
 
@@ -174,7 +181,7 @@ export default function DashboardLayout({
                     className="fixed inset-0 z-10"
                     onClick={() => setProfileOpen(false)}
                   />
-                  <div className="absolute right-0 top-full mt-2 z-20 w-48 rounded-xl border border-white/10 bg-slate-800 py-1 shadow-xl">
+                  <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-xl border border-white/10 bg-slate-800 py-1 shadow-xl">
                     <div className="px-4 py-2 border-b border-white/10">
                       <p className="text-sm font-medium text-white">
                         {user?.firstName} {user?.lastName}

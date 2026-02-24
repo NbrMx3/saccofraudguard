@@ -34,7 +34,7 @@ export default function OfficerDashboard() {
       roleBadgeColor="bg-blue-500/10 text-blue-400 border border-blue-500/20"
     >
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           label="Pending Reviews"
           value="14"

@@ -139,11 +139,12 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
       role: user.role,
     });
 
-    // Set httpOnly cookie
+    // Set httpOnly cookie (fallback)
     res.cookie("token", token, getCookieOptions());
 
     res.json({
       message: "Login successful",
+      token,
       user: {
         id: user.id,
         nationalId: user.nationalId,
