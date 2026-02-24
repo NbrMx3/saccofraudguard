@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Menu, X, Shield } from 'lucide-react'
+import { Menu, X, Shield, Download } from 'lucide-react'
+import { usePWAInstall } from '@/hooks/usePWAInstall'
 
 const navLinks = [
   { label: 'Features', href: '#features' },
@@ -11,6 +12,7 @@ const navLinks = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const { isInstallable, install } = usePWAInstall()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -53,6 +55,15 @@ export default function Navbar() {
 
           {/* Desktop CTA */}
           <div className="hidden items-center gap-3 md:flex">
+            {isInstallable && (
+              <button
+                onClick={install}
+                className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-medium text-emerald-400 transition-all hover:bg-emerald-500/20 hover:border-emerald-500/50 active:scale-[0.98]"
+              >
+                <Download className="h-4 w-4" />
+                Install App
+              </button>
+            )}
             <a
               href="#login"
               className="rounded-xl px-5 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:text-white"
@@ -95,6 +106,15 @@ export default function Navbar() {
               {link.label}
             </a>
           ))}
+          {isInstallable && (
+            <button
+              onClick={() => { install(); setIsOpen(false); }}
+              className="flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-400 transition-all hover:bg-emerald-500/20 mt-2"
+            >
+              <Download className="h-4 w-4" />
+              Install App
+            </button>
+          )}
           <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/5 mt-3">
             <a
               href="#login"
