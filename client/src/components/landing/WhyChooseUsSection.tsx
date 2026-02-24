@@ -29,19 +29,19 @@ const reasons = [
 
 export default function WhyChooseUsSection() {
   return (
-    <section id="why-us" className="relative bg-slate-950 py-24 sm:py-32">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+    <section id="why-us" className="relative bg-[#0a1628] py-24 sm:py-32">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/10 to-transparent" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-16 lg:grid-cols-2 lg:gap-20 items-center">
           {/* Left Content */}
           <div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-emerald-400 mb-3">
+            <p className="text-sm font-semibold uppercase tracking-widest text-sky-400 mb-3">
               Why Choose Us
             </p>
             <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
               Built for{' '}
-              <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-blue-400 bg-clip-text text-transparent">
                 trust & security
               </span>
             </h2>
@@ -71,10 +71,10 @@ export default function WhyChooseUsSection() {
             {reasons.map((reason) => (
               <div
                 key={reason.title}
-                className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 transition-all duration-300 hover:border-emerald-500/20 hover:bg-white/[0.04]"
+                className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 transition-all duration-300 hover:border-sky-400/20 hover:bg-white/[0.04]"
               >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 group-hover:bg-emerald-500/15 transition-colors">
-                  <reason.icon className="h-5 w-5 text-emerald-400" />
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-sky-500/10 border border-sky-400/20 group-hover:bg-sky-500/15 transition-colors">
+                  <reason.icon className="h-5 w-5 text-sky-400" />
                 </div>
                 <h3 className="text-sm font-semibold text-white mb-2">
                   {reason.title}

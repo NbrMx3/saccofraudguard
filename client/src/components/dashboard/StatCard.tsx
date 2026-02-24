@@ -18,7 +18,7 @@ export default function StatCard({
   iconColor,
 }: StatCardProps) {
   const changeColors = {
-    positive: "text-emerald-400",
+    positive: "text-sky-400",
     negative: "text-red-400",
     neutral: "text-slate-400",
   };

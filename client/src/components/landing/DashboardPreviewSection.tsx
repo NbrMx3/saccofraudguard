@@ -9,20 +9,20 @@ import {
 
 export default function DashboardPreviewSection() {
   return (
-    <section id="dashboard" className="relative bg-slate-950 py-24 sm:py-32 overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+    <section id="dashboard" className="relative bg-[#0a1628] py-24 sm:py-32 overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/10 to-transparent" />
       {/* Background glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-500/[0.04] rounded-full blur-[100px]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-sky-500/[0.04] rounded-full blur-[100px]" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-sm font-semibold uppercase tracking-widest text-emerald-400 mb-3">
+          <p className="text-sm font-semibold uppercase tracking-widest text-sky-400 mb-3">
             Dashboard Preview
           </p>
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
             Powerful analytics at your{' '}
-            <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-blue-400 bg-clip-text text-transparent">
               fingertips
             </span>
           </h2>
@@ -35,7 +35,7 @@ export default function DashboardPreviewSection() {
         {/* Dashboard Mockup */}
         <div className="relative mx-auto max-w-5xl">
           {/* Outer glow */}
-          <div className="absolute -inset-6 rounded-3xl bg-gradient-to-tr from-emerald-500/5 to-teal-500/5 blur-2xl" />
+          <div className="absolute -inset-6 rounded-3xl bg-gradient-to-tr from-sky-500/5 to-blue-500/5 blur-2xl" />
 
           <div className="relative rounded-2xl border border-white/[0.08] bg-slate-900/70 shadow-2xl backdrop-blur-sm overflow-hidden">
             {/* Titlebar */}
@@ -43,7 +43,7 @@ export default function DashboardPreviewSection() {
               <div className="flex gap-2">
                 <div className="h-3 w-3 rounded-full bg-red-500/60" />
                 <div className="h-3 w-3 rounded-full bg-amber-500/60" />
-                <div className="h-3 w-3 rounded-full bg-emerald-500/60" />
+                <div className="h-3 w-3 rounded-full bg-sky-500/60" />
               </div>
               <div className="flex-1 text-center">
                 <span className="text-xs text-slate-500 font-medium">
@@ -91,7 +91,7 @@ export default function DashboardPreviewSection() {
                   >
                     <div className="flex items-center justify-between mb-3">
                       <stat.icon className="h-4 w-4 text-slate-500" />
-                      <div className={`flex items-center gap-1 text-xs font-medium ${stat.up ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      <div className={`flex items-center gap-1 text-xs font-medium ${stat.up ? 'text-sky-400' : 'text-amber-400'}`}>
                         {stat.up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                         {stat.change}
                       </div>
@@ -111,7 +111,7 @@ export default function DashboardPreviewSection() {
                       Transaction Volume
                     </p>
                     <div className="flex gap-3 text-xs text-slate-500">
-                      <span className="text-emerald-400 font-medium">7D</span>
+                      <span className="text-sky-400 font-medium">7D</span>
                       <span className="hover:text-slate-300 cursor-pointer">30D</span>
                       <span className="hover:text-slate-300 cursor-pointer">90D</span>
                     </div>
@@ -122,7 +122,7 @@ export default function DashboardPreviewSection() {
                       (h, i) => (
                         <div
                           key={i}
-                          className="flex-1 rounded-t-md bg-gradient-to-t from-emerald-500/30 to-emerald-500/60 transition-all hover:from-emerald-500/40 hover:to-emerald-400/80"
+                          className="flex-1 rounded-t-md bg-gradient-to-t from-sky-500/30 to-sky-500/60 transition-all hover:from-sky-500/40 hover:to-sky-400/80"
                           style={{ height: `${h}%` }}
                         />
                       )

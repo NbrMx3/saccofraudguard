@@ -57,7 +57,7 @@ export default function AdminDashboard() {
           change="95% resolution rate"
           changeType="positive"
           icon={ShieldCheck}
-          iconColor="bg-emerald-500/10 text-emerald-400"
+          iconColor="bg-sky-500/10 text-sky-400"
         />
         <StatCard
           label="System Health"
@@ -125,7 +125,7 @@ export default function AdminDashboard() {
       <div className="mt-6 rounded-2xl border border-white/[0.06] bg-slate-900/50 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-white">Recent Transactions</h3>
-          <button className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">
+          <button className="text-xs text-sky-400 hover:text-sky-300 font-medium">
             View All
           </button>
         </div>
@@ -164,7 +164,7 @@ export default function AdminDashboard() {
                           ? "bg-red-500/10 text-red-400"
                           : row.risk >= 40
                           ? "bg-amber-500/10 text-amber-400"
-                          : "bg-emerald-500/10 text-emerald-400"
+                          : "bg-sky-500/10 text-sky-400"
                       }`}
                     >
                       {row.risk}
@@ -176,7 +176,7 @@ export default function AdminDashboard() {
                         row.status === "Flagged"
                           ? "bg-red-500/10 text-red-400 border border-red-500/20"
                           : row.status === "Cleared"
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
                           : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                       }`}
                     >

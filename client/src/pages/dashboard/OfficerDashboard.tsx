@@ -49,7 +49,7 @@ export default function OfficerDashboard() {
           change="+8 this week"
           changeType="positive"
           icon={CheckCircle}
-          iconColor="bg-emerald-500/10 text-emerald-400"
+          iconColor="bg-sky-500/10 text-sky-400"
         />
         <StatCard
           label="Flagged Transactions"
@@ -130,7 +130,7 @@ export default function OfficerDashboard() {
       <div className="mt-6 rounded-2xl border border-white/[0.06] bg-slate-900/50 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-white">Member Accounts</h3>
-          <button className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">
+          <button className="text-xs text-sky-400 hover:text-sky-300 font-medium">
             View All
           </button>
         </div>
@@ -167,7 +167,7 @@ export default function OfficerDashboard() {
                     <span
                       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                         row.status === "Active"
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
                           : row.status === "Flagged"
                           ? "bg-red-500/10 text-red-400 border border-red-500/20"
                           : "bg-slate-500/10 text-slate-400 border border-slate-500/20"

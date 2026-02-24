@@ -18,8 +18,8 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-950">
-        <Loader2 className="h-10 w-10 text-emerald-500 animate-spin" />
+      <div className="flex items-center justify-center min-h-screen bg-[#0a1628]">
+        <Loader2 className="h-10 w-10 text-sky-500 animate-spin" />
       </div>
     );
   }

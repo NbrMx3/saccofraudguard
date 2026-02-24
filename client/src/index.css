@@ -121,3 +121,121 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ===== Cyber Security Animations ===== */
+
+/* Floating tech icons */
+@keyframes cyber-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.2;
+  }
+  25% {
+    transform: translateY(-18px) rotate(5deg);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(-8px) rotate(-3deg);
+    opacity: 0.2;
+  }
+  75% {
+    transform: translateY(-22px) rotate(4deg);
+    opacity: 0.3;
+  }
+}
+.cyber-float {
+  animation: cyber-float 7s ease-in-out infinite;
+}
+
+/* Pulsing glow */
+@keyframes cyber-pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+.cyber-pulse {
+  animation: cyber-pulse 4s ease-in-out infinite;
+}
+
+/* Slow spin for wireframe rings */
+@keyframes cyber-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.cyber-spin {
+  animation: cyber-spin 20s linear infinite;
+}
+
+/* Scan line sweep */
+@keyframes cyber-scanline {
+  0% { top: -10%; }
+  100% { top: 110%; }
+}
+.cyber-scanline {
+  animation: cyber-scanline 6s linear infinite;
+}
+
+/* Shimmer effect */
+@keyframes cyber-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+.cyber-shimmer {
+  background-size: 200% auto;
+  animation: cyber-shimmer 3s linear infinite;
+}
+
+/* Grid mosaic on shield */
+.cyber-grid-mosaic {
+  background-image:
+    linear-gradient(rgba(56,189,248,0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,189,248,0.12) 1px, transparent 1px);
+  background-size: 8px 8px;
+  mask: radial-gradient(ellipse at center, black 30%, transparent 70%);
+  -webkit-mask: radial-gradient(ellipse at center, black 30%, transparent 70%);
+}
+
+/* Data stream flowing down */
+@keyframes cyber-data-flow {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+/* Feature card hover glow */
+.cyber-card-glow {
+  position: relative;
+  overflow: hidden;
+}
+.cyber-card-glow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(56,189,248,0.04), transparent);
+  transition: left 0.6s ease;
+}
+.cyber-card-glow:hover::before {
+  left: 150%;
+}
+
+/* Typing cursor */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.cyber-cursor {
+  animation: blink 1s step-end infinite;
+}

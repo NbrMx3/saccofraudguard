@@ -19,7 +19,7 @@ export default function ThemeToggle() {
           title={label}
           className={`flex items-center justify-center rounded-lg p-1.5 transition-all ${
             theme === value
-              ? "bg-emerald-500/20 text-emerald-400"
+              ? "bg-sky-500/20 text-sky-400"
               : "text-slate-500 hover:text-slate-300"
           }`}
         >

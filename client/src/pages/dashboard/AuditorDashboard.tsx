@@ -49,7 +49,7 @@ export default function AuditorDashboard() {
           change="+2% from last audit"
           changeType="positive"
           icon={Scale}
-          iconColor="bg-emerald-500/10 text-emerald-400"
+          iconColor="bg-sky-500/10 text-sky-400"
         />
         <StatCard
           label="Risk Findings"
@@ -127,7 +127,7 @@ export default function AuditorDashboard() {
       <div className="mt-6 rounded-2xl border border-white/[0.06] bg-slate-900/50 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-white">Recent Audit Reports</h3>
-          <button className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">
+          <button className="text-xs text-sky-400 hover:text-sky-300 font-medium">
             View All
           </button>
         </div>
@@ -167,7 +167,7 @@ export default function AuditorDashboard() {
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                         row.status === "Completed"
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
                           : row.status === "In Progress"
                           ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                           : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
