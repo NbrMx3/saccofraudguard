@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "@tanstack/react-router";
 import { useAuth } from "@/context/AuthContext";
 import { Shield, Eye, EyeOff, UserPlus, Loader2, Check, X } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 const passwordRules = [
   { label: "At least 8 characters", test: (p: string) => p.length >= 8 },

@@ -1,6 +1,6 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
-import { Toaster } from 'react-hot-toast'
+import { Toaster } from 'sonner'
 import { AuthProvider } from '@/context/AuthContext'
 import { ThemeProvider } from '@/context/ThemeContext'
 
@@ -20,9 +20,10 @@ export const Route = createRootRoute({
         <Outlet />
         <Toaster
           position="top-right"
+          theme="dark"
+          richColors
           toastOptions={{
-            className: '!bg-slate-800 !text-white !border !border-white/10',
-            duration: 4000,
+            className: 'bg-slate-800 text-white border border-white/10',
           }}
         />
         <Suspense>

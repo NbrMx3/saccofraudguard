@@ -11,7 +11,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 export interface NavItem {
   label: string;

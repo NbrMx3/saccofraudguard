@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from '@tanstack/react-router'
 import { Menu, X, Shield, Download } from 'lucide-react'
 import { usePWAInstall } from '@/hooks/usePWAInstall'
 
@@ -64,18 +65,18 @@ export default function Navbar() {
                 Install App
               </button>
             )}
-            <a
-              href="#login"
+            <Link
+              to="/login"
               className="rounded-xl px-5 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:text-white"
             >
               Admin Login
-            </a>
-            <a
-              href="#get-started"
+            </Link>
+            <Link
+              to="/signup"
               className="rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-400 hover:shadow-emerald-500/40 active:scale-[0.98]"
             >
               Get Started
-            </a>
+            </Link>
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -116,18 +117,18 @@ export default function Navbar() {
             </button>
           )}
           <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/5 mt-3">
-            <a
-              href="#login"
+            <Link
+              to="/login"
               className="rounded-xl border border-white/10 px-4 py-2.5 text-center text-sm font-medium text-slate-300 hover:text-white hover:border-white/20 transition-colors"
             >
               Admin Login
-            </a>
-            <a
-              href="#get-started"
+            </Link>
+            <Link
+              to="/signup"
               className="rounded-xl bg-emerald-500 px-4 py-2.5 text-center text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-400 transition-colors"
             >
               Get Started
-            </a>
+            </Link>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { ArrowRight, Shield, Activity, ChevronRight } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
 
 export default function HeroSection() {
   return (
@@ -50,20 +51,20 @@ export default function HeroSection() {
 
             {/* CTA Buttons */}
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-              <a
-                href="#get-started"
+              <Link
+                to="/signup"
                 className="group inline-flex items-center justify-center gap-2.5 rounded-2xl bg-emerald-500 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-emerald-500/20 transition-all hover:bg-emerald-400 hover:shadow-emerald-500/30 active:scale-[0.98]"
               >
                 Get Started
                 <ArrowRight className="h-4.5 w-4.5 transition-transform group-hover:translate-x-0.5" />
-              </a>
-              <a
-                href="#login"
+              </Link>
+              <Link
+                to="/login"
                 className="group inline-flex items-center justify-center gap-2.5 rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10 active:scale-[0.98]"
               >
                 <Shield className="h-4.5 w-4.5 text-emerald-400" />
                 Admin Login
-              </a>
+              </Link>
             </div>
 
             {/* Trust Indicators */}

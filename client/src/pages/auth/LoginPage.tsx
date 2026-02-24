@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "@tanstack/react-router";
 import { useAuth } from "@/context/AuthContext";
 import { Shield, Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const { login } = useAuth();

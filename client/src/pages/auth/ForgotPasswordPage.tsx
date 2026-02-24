@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/context/AuthContext";
 import { Shield, Mail, Loader2, ArrowLeft } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 export default function ForgotPasswordPage() {
   const { forgotPassword } = useAuth();
