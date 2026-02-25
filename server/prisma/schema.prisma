@@ -41,7 +41,9 @@ model User {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  createdMembers Member[] @relation("CreatedByOfficer")
+  createdMembers      Member[]      @relation("CreatedByOfficer")
+  processedTransactions Transaction[] @relation("ProcessedByOfficer")
+  approvedLoans       Loan[]        @relation("ApprovedByOfficer")
 
   @@map("users")
 }
@@ -53,10 +55,104 @@ model Member {
   email       String       @unique
   phoneNumber String       @map("phone_number")
   status      MemberStatus @default(ACTIVE)
+  balance     Float        @default(0)
   createdById String       @map("created_by_id")
   createdBy   User         @relation("CreatedByOfficer", fields: [createdById], references: [id])
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
+  transactions Transaction[]
+  loans        Loan[]
+  fraudAlerts  FraudAlert[]
+
   @@map("members")
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  LOAN_DISBURSEMENT
+  LOAN_REPAYMENT
+}
+
+enum TransactionStatus {
+  COMPLETED
+  PENDING
+  FAILED
+  FLAGGED
+}
+
+model Transaction {
+  id          String            @id @default(cuid())
+  txRef       String            @unique @map("tx_ref")
+  type        TransactionType
+  amount      Float
+  balanceBefore Float           @map("balance_before")
+  balanceAfter  Float           @map("balance_after")
+  description String?
+  status      TransactionStatus @default(COMPLETED)
+  memberId    String            @map("member_id")
+  member      Member            @relation(fields: [memberId], references: [id])
+  processedById String          @map("processed_by_id")
+  processedBy   User            @relation("ProcessedByOfficer", fields: [processedById], references: [id])
+  loanId      String?           @map("loan_id")
+  loan        Loan?             @relation(fields: [loanId], references: [id])
+  fraudAlerts FraudAlert[]
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  @@map("transactions")
+}
+
+enum LoanStatus {
+  PENDING
+  APPROVED
+  ACTIVE
+  COMPLETED
+  DEFAULTED
+  REJECTED
+}
+
+model Loan {
+  id             String     @id @default(cuid())
+  loanRef        String     @unique @map("loan_ref")
+  amount         Float
+  interestRate   Float      @map("interest_rate")
+  termMonths     Int        @map("term_months")
+  monthlyPayment Float      @map("monthly_payment")
+  totalRepaid    Float      @default(0) @map("total_repaid")
+  outstandingBalance Float  @map("outstanding_balance")
+  status         LoanStatus @default(PENDING)
+  purpose        String?
+  memberId       String     @map("member_id")
+  member         Member     @relation(fields: [memberId], references: [id])
+  approvedById   String?    @map("approved_by_id")
+  approvedBy     User?      @relation("ApprovedByOfficer", fields: [approvedById], references: [id])
+  transactions   Transaction[]
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  @@map("loans")
+}
+
+enum FraudSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model FraudAlert {
+  id            String        @id @default(cuid())
+  type          String
+  severity      FraudSeverity
+  description   String
+  resolved      Boolean       @default(false)
+  memberId      String        @map("member_id")
+  member        Member        @relation(fields: [memberId], references: [id])
+  transactionId String?       @map("transaction_id")
+  transaction   Transaction?  @relation(fields: [transactionId], references: [id])
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  @@map("fraud_alerts")
 }

@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import authRouter from "./routes/auth.js";
 import membersRouter from "./routes/members.js";
+import transactionsRouter from "./routes/transactions.js";
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.set("trust proxy", 1);
 // Routes
 app.use("/api/auth", authRouter);
 app.use("/api/members", membersRouter);
+app.use("/api/transactions", transactionsRouter);
 
 // Health check
 app.get("/health", (_req: Request, res: Response) => {

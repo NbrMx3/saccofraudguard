@@ -6,6 +6,7 @@ import MemberDetailModal from "@/features/officer-dashboard/MemberDetailModal";
 import AddMemberForm from "@/features/officer-dashboard/AddMemberForm";
 import SavingsHistoryModal from "@/features/officer-dashboard/SavingsHistoryModal";
 import LoanHistoryModal from "@/features/officer-dashboard/LoanHistoryModal";
+import TransactionsPage from "@/features/officer-dashboard/TransactionsPage";
 import type { Member } from "@/services/memberService";
 import {
   LayoutDashboard,
@@ -20,7 +21,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-type OfficerView = "dashboard" | "members";
+type OfficerView = "dashboard" | "members" | "transactions";
 
 export default function OfficerDashboard() {
   const [activeView, setActiveView] = useState<OfficerView>("dashboard");
@@ -44,7 +45,7 @@ export default function OfficerDashboard() {
       active: activeView === "members",
       onClick: () => setActiveView("members"),
     },
-    { label: "Transactions", icon: CreditCard },
+    { label: "Transactions", icon: CreditCard, active: activeView === "transactions", onClick: () => setActiveView("transactions") },
     { label: "Fraud Alerts", icon: AlertTriangle },
     { label: "Case Investigation", icon: Search },
     { label: "Reports", icon: FileText },
@@ -126,6 +127,8 @@ export default function OfficerDashboard() {
           </div>
         </>
       )}
+
+      {activeView === "transactions" && <TransactionsPage />}
 
       {/* Member detail modal */}
       {selectedMember && (
