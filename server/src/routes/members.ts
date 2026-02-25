@@ -1,9 +1,9 @@
-import { Router, type Response } from "express";
+import express, { type Response } from "express";
 import prisma from "../lib/prisma.js";
 import { authenticate, authorize, type AuthRequest } from "../middleware/auth.js";
 import { generateMemberId } from "../utils/generateMemberId.js";
 
-const router = Router();
+const router: express.Router = express.Router();
 
 // ─── POST /api/members — Create a new member ───────────────────────────
 router.post(
@@ -166,8 +166,9 @@ router.get(
   authorize("OFFICER", "ADMIN"),
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
+      const id = req.params.id as string;
       const member = await prisma.member.findUnique({
-        where: { id: req.params.id },
+        where: { id },
         select: {
           id: true,
           memberId: true,
@@ -210,8 +211,9 @@ router.patch(
         return;
       }
 
+      const id = req.params.id as string;
       const existing = await prisma.member.findUnique({
-        where: { id: req.params.id },
+        where: { id },
         select: { id: true },
       });
 
@@ -221,7 +223,7 @@ router.patch(
       }
 
       const member = await prisma.member.update({
-        where: { id: req.params.id },
+        where: { id },
         data: { status },
         select: {
           id: true,
@@ -246,8 +248,9 @@ router.delete(
   authorize("OFFICER", "ADMIN"),
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
+      const id = req.params.id as string;
       const existing = await prisma.member.findUnique({
-        where: { id: req.params.id },
+        where: { id },
         select: { id: true },
       });
 
@@ -256,7 +259,7 @@ router.delete(
         return;
       }
 
-      await prisma.member.delete({ where: { id: req.params.id } });
+      await prisma.member.delete({ where: { id } });
 
       res.json({ message: "Member deleted successfully" });
     } catch (error) {
