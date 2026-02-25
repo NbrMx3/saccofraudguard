@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import authRouter from "./routes/auth.js";
+import membersRouter from "./routes/members.js";
 
 dotenv.config();
 
@@ -48,6 +49,7 @@ app.set("trust proxy", 1);
 
 // Routes
 app.use("/api/auth", authRouter);
+app.use("/api/members", membersRouter);
 
 // Health check
 app.get("/health", (_req: Request, res: Response) => {

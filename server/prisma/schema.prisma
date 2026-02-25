@@ -19,6 +19,12 @@ enum Role {
   AUDITOR
 }
 
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
 model User {
   id             String   @id @default(cuid())
   nationalId     String   @unique @map("national_id")
@@ -34,5 +40,22 @@ model User {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
+  createdMembers Member[] @relation("CreatedByOfficer")
+
   @@map("users")
+}
+
+model Member {
+  id          String       @id @default(cuid())
+  memberId    String       @unique @map("member_id")
+  fullName    String       @map("full_name")
+  email       String       @unique
+  phoneNumber String       @map("phone_number")
+  status      MemberStatus @default(ACTIVE)
+  createdById String       @map("created_by_id")
+  createdBy   User         @relation("CreatedByOfficer", fields: [createdById], references: [id])
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@map("members")
 }

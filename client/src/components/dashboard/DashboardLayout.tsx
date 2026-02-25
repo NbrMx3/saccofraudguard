@@ -18,6 +18,7 @@ export interface NavItem {
   icon: LucideIcon;
   href?: string;
   active?: boolean;
+  onClick?: () => void;
 }
 
 interface DashboardLayoutProps {
@@ -105,6 +106,7 @@ export default function DashboardLayout({
             return (
               <button
                 key={item.label}
+                onClick={item.onClick}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                   item.active
                     ? "bg-sky-500/10 text-sky-400 border border-sky-400/20"
