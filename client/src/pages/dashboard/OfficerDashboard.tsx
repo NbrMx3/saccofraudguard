@@ -4,6 +4,8 @@ import MemberStatsCards from "@/features/officer-dashboard/MemberStatsCards";
 import MemberListTable from "@/features/officer-dashboard/MemberListTable";
 import MemberDetailModal from "@/features/officer-dashboard/MemberDetailModal";
 import AddMemberForm from "@/features/officer-dashboard/AddMemberForm";
+import SavingsHistoryModal from "@/features/officer-dashboard/SavingsHistoryModal";
+import LoanHistoryModal from "@/features/officer-dashboard/LoanHistoryModal";
 import type { Member } from "@/services/memberService";
 import {
   LayoutDashboard,
@@ -24,6 +26,8 @@ export default function OfficerDashboard() {
   const [activeView, setActiveView] = useState<OfficerView>("dashboard");
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [savingsMember, setSavingsMember] = useState<Member | null>(null);
+  const [loansMember, setLoansMember] = useState<Member | null>(null);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
@@ -88,7 +92,12 @@ export default function OfficerDashboard() {
 
           {/* Recent members table */}
           <div className="mt-6">
-            <MemberListTable refreshKey={refreshKey} onViewMember={setSelectedMember} />
+            <MemberListTable
+              refreshKey={refreshKey}
+              onViewMember={setSelectedMember}
+              onViewSavings={setSavingsMember}
+              onViewLoans={setLoansMember}
+            />
           </div>
         </>
       )}
@@ -108,7 +117,12 @@ export default function OfficerDashboard() {
           <MemberStatsCards />
 
           <div className="mt-6">
-            <MemberListTable refreshKey={refreshKey} onViewMember={setSelectedMember} />
+            <MemberListTable
+              refreshKey={refreshKey}
+              onViewMember={setSelectedMember}
+              onViewSavings={setSavingsMember}
+              onViewLoans={setLoansMember}
+            />
           </div>
         </>
       )}
@@ -122,6 +136,30 @@ export default function OfficerDashboard() {
             setSelectedMember(null);
             refresh();
           }}
+          onViewSavings={(m) => {
+            setSelectedMember(null);
+            setSavingsMember(m);
+          }}
+          onViewLoans={(m) => {
+            setSelectedMember(null);
+            setLoansMember(m);
+          }}
+        />
+      )}
+
+      {/* Savings history modal */}
+      {savingsMember && (
+        <SavingsHistoryModal
+          member={savingsMember}
+          onClose={() => setSavingsMember(null)}
+        />
+      )}
+
+      {/* Loan history modal */}
+      {loansMember && (
+        <LoanHistoryModal
+          member={loansMember}
+          onClose={() => setLoansMember(null)}
         />
       )}
     </DashboardLayout>

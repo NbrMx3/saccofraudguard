@@ -8,6 +8,9 @@ import {
   UserX,
   ShieldOff,
   Loader2,
+  Flag,
+  Wallet,
+  Landmark,
 } from "lucide-react";
 import { updateMemberStatus, type Member } from "@/services/memberService";
 import { toast } from "sonner";
@@ -17,16 +20,20 @@ interface MemberDetailModalProps {
   member: Member;
   onClose: () => void;
   onUpdated: () => void;
+  onViewSavings: (member: Member) => void;
+  onViewLoans: (member: Member) => void;
 }
 
 export default function MemberDetailModal({
   member,
   onClose,
   onUpdated,
+  onViewSavings,
+  onViewLoans,
 }: MemberDetailModalProps) {
   const [loading, setLoading] = useState(false);
 
-  async function handleStatusChange(newStatus: "ACTIVE" | "INACTIVE" | "SUSPENDED") {
+  async function handleStatusChange(newStatus: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "FLAGGED") {
     setLoading(true);
     try {
       await updateMemberStatus(member.id, newStatus);
@@ -44,6 +51,7 @@ export default function MemberDetailModal({
     ACTIVE: "bg-sky-500/10 text-sky-400 border-sky-500/20",
     INACTIVE: "bg-amber-500/10 text-amber-400 border-amber-500/20",
     SUSPENDED: "bg-red-500/10 text-red-400 border-red-500/20",
+    FLAGGED: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   };
 
   return (
@@ -75,6 +83,7 @@ export default function MemberDetailModal({
             {member.status === "ACTIVE" && <UserCheck className="h-3.5 w-3.5" />}
             {member.status === "INACTIVE" && <UserX className="h-3.5 w-3.5" />}
             {member.status === "SUSPENDED" && <ShieldOff className="h-3.5 w-3.5" />}
+            {member.status === "FLAGGED" && <Flag className="h-3.5 w-3.5" />}
             {member.status}
           </span>
         </div>
@@ -168,6 +177,49 @@ export default function MemberDetailModal({
                 Suspend
               </button>
             )}
+
+            {member.status !== "FLAGGED" && (
+              <button
+                onClick={() => handleStatusChange("FLAGGED")}
+                disabled={loading}
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-orange-500/20 bg-orange-500/10 px-3 py-2 text-xs font-semibold text-orange-400 transition-colors hover:bg-orange-500/20 disabled:opacity-50"
+              >
+                {loading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Flag className="h-3.5 w-3.5" />
+                )}
+                Flag
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* History Actions */}
+        <div className="mt-4 border-t border-white/[0.06] pt-5">
+          <p className="mb-3 text-xs font-medium text-slate-400">Member History</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                onClose();
+                onViewSavings(member);
+              }}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/20"
+            >
+              <Wallet className="h-3.5 w-3.5" />
+              Savings History
+            </button>
+
+            <button
+              onClick={() => {
+                onClose();
+                onViewLoans(member);
+              }}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-violet-500/20 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-400 transition-colors hover:bg-violet-500/20"
+            >
+              <Landmark className="h-3.5 w-3.5" />
+              Loan History
+            </button>
           </div>
         </div>
       </div>

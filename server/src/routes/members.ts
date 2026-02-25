@@ -99,7 +99,7 @@ router.get(
         ];
       }
 
-      if (status && ["ACTIVE", "INACTIVE", "SUSPENDED"].includes(status)) {
+      if (status && ["ACTIVE", "INACTIVE", "SUSPENDED", "FLAGGED"].includes(status)) {
         where.status = status;
       }
 
@@ -145,13 +145,14 @@ router.get(
   authorize("OFFICER", "ADMIN"),
   async (_req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const [active, inactive, suspended] = await Promise.all([
+      const [active, inactive, suspended, flagged] = await Promise.all([
         prisma.member.count({ where: { status: "ACTIVE" } }),
         prisma.member.count({ where: { status: "INACTIVE" } }),
         prisma.member.count({ where: { status: "SUSPENDED" } }),
+        prisma.member.count({ where: { status: "FLAGGED" } }),
       ]);
 
-      res.json({ active, inactive, suspended });
+      res.json({ active, inactive, suspended, flagged });
     } catch (error) {
       console.error("Member stats error:", error);
       res.status(500).json({ error: "Internal server error" });
@@ -206,8 +207,8 @@ router.patch(
     try {
       const { status } = req.body;
 
-      if (!status || !["ACTIVE", "INACTIVE", "SUSPENDED"].includes(status)) {
-        res.status(400).json({ error: "Status must be ACTIVE, INACTIVE or SUSPENDED" });
+      if (!status || !["ACTIVE", "INACTIVE", "SUSPENDED", "FLAGGED"].includes(status)) {
+        res.status(400).json({ error: "Status must be ACTIVE, INACTIVE, SUSPENDED or FLAGGED" });
         return;
       }
 

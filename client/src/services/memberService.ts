@@ -6,7 +6,7 @@ export interface Member {
   fullName: string;
   email: string;
   phoneNumber: string;
-  status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "FLAGGED";
   createdAt: string;
   updatedAt?: string;
   createdBy?: { firstName: string; lastName: string };
@@ -16,6 +16,7 @@ export interface MemberStats {
   active: number;
   inactive: number;
   suspended: number;
+  flagged: number;
 }
 
 export interface PaginationMeta {
@@ -69,7 +70,7 @@ export async function createMember(payload: {
 
 export async function updateMemberStatus(
   id: string,
-  status: "ACTIVE" | "INACTIVE" | "SUSPENDED"
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "FLAGGED"
 ): Promise<{ message: string; member: Member }> {
   const { data } = await api.patch<{ message: string; member: Member }>(
     `/api/members/${id}/status`,

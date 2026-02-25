@@ -13,6 +13,9 @@ import {
   UserX,
   UserCheck,
   Trash2,
+  Flag,
+  Wallet,
+  Landmark,
 } from "lucide-react";
 import {
   fetchMembers,
@@ -26,13 +29,17 @@ import { toast } from "sonner";
 interface MemberListTableProps {
   refreshKey: number;
   onViewMember: (member: Member) => void;
+  onViewSavings: (member: Member) => void;
+  onViewLoans: (member: Member) => void;
 }
 
-type StatusFilter = "" | "ACTIVE" | "INACTIVE" | "SUSPENDED";
+type StatusFilter = "" | "ACTIVE" | "INACTIVE" | "SUSPENDED" | "FLAGGED";
 
 export default function MemberListTable({
   refreshKey,
   onViewMember,
+  onViewSavings,
+  onViewLoans,
 }: MemberListTableProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta>({
@@ -75,7 +82,7 @@ export default function MemberListTable({
 
   async function handleStatusChange(
     member: Member,
-    newStatus: "ACTIVE" | "INACTIVE" | "SUSPENDED"
+    newStatus: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "FLAGGED"
   ) {
     setActionLoading(member.id);
     setActionMenuId(null);
@@ -130,6 +137,13 @@ export default function MemberListTable({
             Inactive
           </span>
         );
+      case "FLAGGED":
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-0.5 text-xs font-medium text-orange-400">
+            <Flag className="h-3 w-3" />
+            Flagged
+          </span>
+        );
       default:
         return null;
     }
@@ -152,6 +166,7 @@ export default function MemberListTable({
             <option value="ACTIVE">Active</option>
             <option value="INACTIVE">Inactive</option>
             <option value="SUSPENDED">Suspended</option>
+            <option value="FLAGGED">Flagged</option>
           </select>
 
           {/* Search */}
@@ -276,6 +291,40 @@ export default function MemberListTable({
                                   Suspend
                                 </button>
                               )}
+
+                              {m.status !== "FLAGGED" && (
+                                <button
+                                  onClick={() => handleStatusChange(m, "FLAGGED")}
+                                  className="flex w-full items-center gap-2 px-3 py-2 text-xs text-orange-400 hover:bg-white/5"
+                                >
+                                  <Flag className="h-3.5 w-3.5" />
+                                  Flag Member
+                                </button>
+                              )}
+
+                              <div className="my-1 border-t border-white/[0.06]" />
+
+                              <button
+                                onClick={() => {
+                                  setActionMenuId(null);
+                                  onViewSavings(m);
+                                }}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-emerald-400 hover:bg-white/5"
+                              >
+                                <Wallet className="h-3.5 w-3.5" />
+                                Savings History
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setActionMenuId(null);
+                                  onViewLoans(m);
+                                }}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-xs text-violet-400 hover:bg-white/5"
+                              >
+                                <Landmark className="h-3.5 w-3.5" />
+                                Loan History
+                              </button>
 
                               <div className="my-1 border-t border-white/[0.06]" />
 

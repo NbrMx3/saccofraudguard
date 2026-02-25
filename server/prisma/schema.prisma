@@ -23,6 +23,7 @@ enum MemberStatus {
   ACTIVE
   INACTIVE
   SUSPENDED
+  FLAGGED
 }
 
 model User {

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Users, UserX, ShieldOff } from "lucide-react";
+import { Users, UserX, ShieldOff, Flag } from "lucide-react";
 import { fetchMemberStats, type MemberStats } from "@/services/memberService";
 
 export default function MemberStatsCards() {
-  const [stats, setStats] = useState<MemberStats>({ active: 0, inactive: 0, suspended: 0 });
+  const [stats, setStats] = useState<MemberStats>({ active: 0, inactive: 0, suspended: 0, flagged: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,10 +43,16 @@ export default function MemberStatsCards() {
       icon: ShieldOff,
       colors: "bg-red-500/10 text-red-400",
     },
+    {
+      label: "Flagged Members",
+      value: stats.flagged,
+      icon: Flag,
+      colors: "bg-orange-500/10 text-orange-400",
+    },
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
       {cards.map((card) => {
         const Icon = card.icon;
         return (
