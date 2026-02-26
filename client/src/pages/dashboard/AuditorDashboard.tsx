@@ -8,7 +8,12 @@ import InvestigationsPage from "@/features/auditor-dashboard/InvestigationsPage"
 import AuditTrailPage from "@/features/auditor-dashboard/AuditTrailPage";
 import ComplianceReportsPage from "@/features/auditor-dashboard/ComplianceReportsPage";
 import ExportDataPage from "@/features/auditor-dashboard/ExportDataPage";
+import RuleEnginePage from "@/features/fraud-engine/RuleEnginePage";
+import BehaviorAnalysisPage from "@/features/fraud-engine/BehaviorAnalysisPage";
+import RiskScoringPage from "@/features/fraud-engine/RiskScoringPage";
+import DecisionLogicPage from "@/features/fraud-engine/DecisionLogicPage";
 import { fetchAuditorStats, type AuditorDashboardStats } from "@/services/auditorService";
+import { fetchEngineStats, type EngineStats } from "@/services/fraudEngineService";
 import {
   LayoutDashboard,
   FileSearch,
@@ -20,20 +25,29 @@ import {
   Download,
   ShieldAlert,
   Loader2,
+  Shield,
+  Activity,
+  Gauge,
+  Brain,
 } from "lucide-react";
 
-type AuditorView = "dashboard" | "audit-reviews" | "compliance" | "fraud-reports" | "investigations" | "audit-trail" | "compliance-reports" | "export-data";
+type AuditorView = "dashboard" | "audit-reviews" | "compliance" | "fraud-reports" | "investigations" | "audit-trail" | "compliance-reports" | "export-data" | "rule-engine" | "behavior-analysis" | "risk-scoring" | "decision-logic";
 
 export default function AuditorDashboard() {
   const [currentView, setCurrentView] = useState<AuditorView>("dashboard");
   const [stats, setStats] = useState<AuditorDashboardStats | null>(null);
+  const [engineStats, setEngineStats] = useState<EngineStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
-        const data = await fetchAuditorStats();
-        setStats(data);
+        const [auditorData, engineData] = await Promise.all([
+          fetchAuditorStats(),
+          fetchEngineStats(),
+        ]);
+        setStats(auditorData);
+        setEngineStats(engineData);
       } catch {
         /* silently fail */
       } finally {
@@ -51,6 +65,11 @@ export default function AuditorDashboard() {
     { label: "Audit Trail", icon: History, active: currentView === "audit-trail", onClick: () => setCurrentView("audit-trail") },
     { label: "Compliance Reports", icon: FileText, active: currentView === "compliance-reports", onClick: () => setCurrentView("compliance-reports") },
     { label: "Export Data", icon: Download, active: currentView === "export-data", onClick: () => setCurrentView("export-data") },
+    { label: "— Fraud Engine —", icon: Shield, active: false, onClick: () => {} },
+    { label: "Rule Engine", icon: Shield, active: currentView === "rule-engine", onClick: () => setCurrentView("rule-engine") },
+    { label: "Behavior Analysis", icon: Activity, active: currentView === "behavior-analysis", onClick: () => setCurrentView("behavior-analysis") },
+    { label: "Risk Scoring", icon: Gauge, active: currentView === "risk-scoring", onClick: () => setCurrentView("risk-scoring") },
+    { label: "Decision Logic", icon: Brain, active: currentView === "decision-logic", onClick: () => setCurrentView("decision-logic") },
   ], [currentView]);
 
   return (
@@ -66,6 +85,10 @@ export default function AuditorDashboard() {
       {currentView === "audit-trail" && <AuditTrailPage />}
       {currentView === "compliance-reports" && <ComplianceReportsPage />}
       {currentView === "export-data" && <ExportDataPage />}
+      {currentView === "rule-engine" && <RuleEnginePage />}
+      {currentView === "behavior-analysis" && <BehaviorAnalysisPage />}
+      {currentView === "risk-scoring" && <RiskScoringPage />}
+      {currentView === "decision-logic" && <DecisionLogicPage />}
 
       {currentView === "dashboard" && (
         <>
@@ -164,6 +187,42 @@ export default function AuditorDashboard() {
                     className="w-full mt-3 text-xs text-sky-500 hover:text-sky-400 font-medium">
                     View All Reviews
                   </button>
+                </div>
+              </div>
+
+              {/* Fraud Detection Engine Card */}
+              <div className="mt-6 rounded-2xl border border-violet-500/20 bg-gradient-to-r from-violet-500/5 to-indigo-500/5 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Shield className="h-5 w-5 text-violet-400" />
+                  <h3 className="text-sm font-semibold text-foreground">Fraud Detection Engine</h3>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center">
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{engineStats?.enabledRules ?? 0}<span className="text-xs text-muted-foreground font-normal">/{engineStats?.totalRules ?? 0}</span></p>
+                    <p className="text-[10px] text-muted-foreground">Active Rules</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-amber-400">{engineStats?.unreviewedViolations ?? 0}</p>
+                    <p className="text-[10px] text-muted-foreground">Unreviewed Violations</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-orange-400">{engineStats?.highRiskMembers ?? 0}</p>
+                    <p className="text-[10px] text-muted-foreground">High Risk Members</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-red-400">{engineStats?.criticalRiskMembers ?? 0}</p>
+                    <p className="text-[10px] text-muted-foreground">Critical Risk</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-indigo-400">{engineStats?.pendingApprovals ?? 0}</p>
+                    <p className="text-[10px] text-muted-foreground">Pending Approvals</p>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button onClick={() => setCurrentView("rule-engine")} className="px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-400 text-xs font-medium hover:bg-violet-500/20 transition-colors">Rule Engine</button>
+                  <button onClick={() => setCurrentView("behavior-analysis")} className="px-3 py-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 text-xs font-medium hover:bg-cyan-500/20 transition-colors">Behavior Analysis</button>
+                  <button onClick={() => setCurrentView("risk-scoring")} className="px-3 py-1.5 rounded-lg bg-orange-500/10 text-orange-400 text-xs font-medium hover:bg-orange-500/20 transition-colors">Risk Scoring</button>
+                  <button onClick={() => setCurrentView("decision-logic")} className="px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 text-xs font-medium hover:bg-indigo-500/20 transition-colors">Decision Logic</button>
                 </div>
               </div>
 

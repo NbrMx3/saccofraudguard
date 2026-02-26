@@ -8,6 +8,7 @@ import transactionsRouter from "./routes/transactions.js";
 import adminRouter from "./routes/admin.js";
 import officerRouter from "./routes/officer.js";
 import auditorRouter from "./routes/auditor.js";
+import fraudEngineRouter from "./routes/fraudEngine.js";
 
 dotenv.config();
 
@@ -58,6 +59,7 @@ app.use("/api/transactions", transactionsRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/officer", officerRouter);
 app.use("/api/auditor", auditorRouter);
+app.use("/api/fraud-engine", fraudEngineRouter);
 
 // Health check
 app.get("/health", (_req: Request, res: Response) => {

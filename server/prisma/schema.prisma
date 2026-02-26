@@ -51,6 +51,12 @@ model User {
   documents           Document[]    @relation("UploadedByUser")
   auditReviews        AuditReview[] @relation("ReviewedByAuditor")
   complianceReports   ComplianceReport[] @relation("GeneratedByAuditor")
+  // Fraud Detection Engine relations
+  createdFraudRules     FraudRule[]         @relation("FraudRuleCreator")
+  reviewedViolations    RuleViolation[]     @relation("ViolationReviewer")
+  reviewedWithdrawals   WithdrawalRequest[] @relation("WithdrawalReviewer")
+  approvedDecisions     FraudDecision[]     @relation("DecisionApprover")
+  updatedThresholds     WithdrawalThreshold[] @relation("ThresholdUpdater")
 
   @@map("users")
 }
@@ -68,9 +74,13 @@ model Member {
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
-  transactions Transaction[]
-  loans        Loan[]
-  fraudAlerts  FraudAlert[]
+  transactions      Transaction[]
+  loans              Loan[]
+  fraudAlerts        FraudAlert[]
+  ruleViolations     RuleViolation[]
+  withdrawalRequests WithdrawalRequest[]
+  riskScore          MemberRiskScore?
+  fraudDecisions     FraudDecision[]
 
   @@map("members")
 }
@@ -104,8 +114,10 @@ model Transaction {
   processedBy   User            @relation("ProcessedByOfficer", fields: [processedById], references: [id])
   loanId      String?           @map("loan_id")
   loan        Loan?             @relation(fields: [loanId], references: [id])
-  fraudAlerts FraudAlert[]
-  createdAt   DateTime          @default(now()) @map("created_at")
+  fraudAlerts    FraudAlert[]
+  ruleViolations RuleViolation[]
+  fraudDecisions FraudDecision[]
+  createdAt      DateTime          @default(now()) @map("created_at")
 
   @@map("transactions")
 }
@@ -323,4 +335,161 @@ model ComplianceReport {
   updatedAt     DateTime     @updatedAt @map("updated_at")
 
   @@map("compliance_reports")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FRAUD DETECTION ENGINE
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── Fraud Rules (Rule Engine) ──────────────────────────────────────────
+enum RuleType {
+  FREQUENCY
+  AMOUNT
+  NO_DEPOSIT
+  CUSTOM
+}
+
+model FraudRule {
+  id              String        @id @default(cuid())
+  name            String        @unique
+  description     String
+  ruleType        RuleType      @map("rule_type")
+  enabled         Boolean       @default(true)
+  // For FREQUENCY rules: max allowed count within windowHours
+  maxCount        Int?          @map("max_count")
+  windowHours     Int?          @map("window_hours")
+  // For AMOUNT rules: min/max withdrawal thresholds
+  minAmount       Float?        @map("min_amount")
+  maxAmount       Float?        @map("max_amount")
+  // Severity when triggered
+  severity        FraudSeverity @default(MEDIUM)
+  // Points to add to risk score when this rule fires
+  riskPoints      Int           @default(10) @map("risk_points")
+  createdById     String        @map("created_by_id")
+  createdBy       User          @relation("FraudRuleCreator", fields: [createdById], references: [id])
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  ruleViolations  RuleViolation[]
+
+  @@map("fraud_rules")
+}
+
+// ─── Rule Violations (when a rule fires) ────────────────────────────────
+model RuleViolation {
+  id              String        @id @default(cuid())
+  ruleId          String        @map("rule_id")
+  rule            FraudRule     @relation(fields: [ruleId], references: [id])
+  memberId        String        @map("member_id")
+  member          Member        @relation(fields: [memberId], references: [id])
+  transactionId   String?       @map("transaction_id")
+  transaction     Transaction?  @relation(fields: [transactionId], references: [id])
+  details         String
+  riskPoints      Int           @map("risk_points")
+  reviewed        Boolean       @default(false)
+  reviewedById    String?       @map("reviewed_by_id")
+  reviewedBy      User?         @relation("ViolationReviewer", fields: [reviewedById], references: [id])
+  reviewedAt      DateTime?     @map("reviewed_at")
+  reviewNotes     String?       @map("review_notes")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  @@map("rule_violations")
+}
+
+// ─── Large Withdrawal Requests ──────────────────────────────────────────
+enum WithdrawalRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model WithdrawalRequest {
+  id              String                   @id @default(cuid())
+  requestRef      String                   @unique @map("request_ref")
+  memberId        String                   @map("member_id")
+  member          Member                   @relation(fields: [memberId], references: [id])
+  amount          Float
+  reason          String
+  supportingDoc   String?                  @map("supporting_doc")
+  status          WithdrawalRequestStatus  @default(PENDING)
+  reviewedById    String?                  @map("reviewed_by_id")
+  reviewedBy      User?                    @relation("WithdrawalReviewer", fields: [reviewedById], references: [id])
+  reviewedAt      DateTime?                @map("reviewed_at")
+  reviewNotes     String?                  @map("review_notes")
+  createdAt       DateTime                 @default(now()) @map("created_at")
+  updatedAt       DateTime                 @updatedAt @map("updated_at")
+
+  @@map("withdrawal_requests")
+}
+
+// ─── Member Risk Score ──────────────────────────────────────────────────
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model MemberRiskScore {
+  id                  String    @id @default(cuid())
+  memberId            String    @unique @map("member_id")
+  member              Member    @relation(fields: [memberId], references: [id])
+  totalPoints         Int       @default(0) @map("total_points")
+  riskLevel           RiskLevel @default(LOW) @map("risk_level")
+  frequencyPoints     Int       @default(0) @map("frequency_points")
+  amountPoints        Int       @default(0) @map("amount_points")
+  behaviorPoints      Int       @default(0) @map("behavior_points")
+  noDepositPoints     Int       @default(0) @map("no_deposit_points")
+  avgTransactionAmount Float?   @map("avg_transaction_amount")
+  transactionFrequency Float?   @map("transaction_frequency")
+  lastCalculatedAt    DateTime  @default(now()) @map("last_calculated_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  @@map("member_risk_scores")
+}
+
+// ─── Fraud Decision Log ─────────────────────────────────────────────────
+enum DecisionAction {
+  ALERT_TRIGGERED
+  SECOND_APPROVAL_REQUIRED
+  TRANSACTION_BLOCKED
+  ACCOUNT_FLAGGED
+  MANUAL_REVIEW
+  AUTO_APPROVED
+}
+
+model FraudDecision {
+  id              String          @id @default(cuid())
+  memberId        String          @map("member_id")
+  member          Member          @relation(fields: [memberId], references: [id])
+  transactionId   String?         @map("transaction_id")
+  transaction     Transaction?    @relation(fields: [transactionId], references: [id])
+  riskScore       Int             @map("risk_score")
+  riskLevel       RiskLevel       @map("risk_level")
+  action          DecisionAction
+  reason          String
+  requiresApproval Boolean        @default(false) @map("requires_approval")
+  approved        Boolean?
+  approvedById    String?         @map("approved_by_id")
+  approvedBy      User?           @relation("DecisionApprover", fields: [approvedById], references: [id])
+  approvedAt      DateTime?       @map("approved_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  @@map("fraud_decisions")
+}
+
+// ─── Withdrawal Thresholds (configurable by officers) ───────────────────
+model WithdrawalThreshold {
+  id                    String   @id @default(cuid())
+  largeWithdrawalAmount Float    @map("large_withdrawal_amount")
+  dailyWithdrawalLimit  Float    @map("daily_withdrawal_limit")
+  maxWithdrawalsPerDay  Int      @default(5) @map("max_withdrawals_per_day")
+  requireApprovalAbove  Float    @map("require_approval_above")
+  updatedById           String   @map("updated_by_id")
+  updatedBy             User     @relation("ThresholdUpdater", fields: [updatedById], references: [id])
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("withdrawal_thresholds")
 }
