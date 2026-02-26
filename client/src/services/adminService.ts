@@ -85,17 +85,17 @@ export async function updateSystemConfig(configs: { key: string; value: string }
 
 // ─── Notifications ──────────────────────────────────────────────────
 export async function fetchNotifications() {
-  const { data } = await api.get("/api/admin/notifications");
+  const { data } = await api.get("/api/notifications");
   return data;
 }
 
 export async function markAllNotificationsRead() {
-  const { data } = await api.patch("/api/admin/notifications/read-all");
+  const { data } = await api.patch("/api/notifications/read-all");
   return data;
 }
 
 export async function markNotificationRead(id: string) {
-  const { data } = await api.patch(`/api/admin/notifications/${id}/read`);
+  const { data } = await api.patch(`/api/notifications/${id}/read`);
   return data;
 }
 

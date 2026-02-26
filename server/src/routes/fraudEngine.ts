@@ -695,6 +695,27 @@ router.post("/decisions/evaluate", async (req: AuthRequest, res: Response) => {
   try {
     const { memberId, transactionId } = req.body;
 
+    if (!memberId) {
+      res.status(400).json({ error: "memberId is required" });
+      return;
+    }
+
+    // Validate member exists
+    const memberExists = await prisma.member.findUnique({ where: { id: memberId } });
+    if (!memberExists) {
+      res.status(404).json({ error: "Member not found" });
+      return;
+    }
+
+    // Validate transaction if provided
+    if (transactionId) {
+      const txExists = await prisma.transaction.findUnique({ where: { id: transactionId } });
+      if (!txExists) {
+        res.status(404).json({ error: "Transaction not found" });
+        return;
+      }
+    }
+
     // Get or calculate risk score
     let riskRecord = await prisma.memberRiskScore.findUnique({ where: { memberId } });
     if (!riskRecord) {

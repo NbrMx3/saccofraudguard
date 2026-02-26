@@ -584,60 +584,8 @@ router.put(
 );
 
 // ═══════════════════════════════════════════════════════════════════
-//  NOTIFICATIONS
+//  NOTIFICATIONS — moved to /api/notifications (accessible by all roles)
 // ═══════════════════════════════════════════════════════════════════
-router.get(
-  "/notifications",
-  async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-      const notifications = await prisma.notification.findMany({
-        where: { userId: req.user!.userId },
-        orderBy: { createdAt: "desc" },
-        take: 50,
-      });
-      const unreadCount = await prisma.notification.count({
-        where: { userId: req.user!.userId, read: false },
-      });
-      res.json({ notifications, unreadCount });
-    } catch (error) {
-      console.error("Notifications error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-);
-
-router.patch(
-  "/notifications/read-all",
-  async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-      await prisma.notification.updateMany({
-        where: { userId: req.user!.userId, read: false },
-        data: { read: true },
-      });
-      res.json({ message: "All notifications marked as read" });
-    } catch (error) {
-      console.error("Mark read error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-);
-
-router.patch(
-  "/notifications/:id/read",
-  async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-      const id = req.params.id as string;
-      await prisma.notification.update({
-        where: { id },
-        data: { read: true },
-      });
-      res.json({ message: "Notification marked as read" });
-    } catch (error) {
-      console.error("Mark notification read error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-);
 
 // ═══════════════════════════════════════════════════════════════════
 //  DATA EXPORTS
