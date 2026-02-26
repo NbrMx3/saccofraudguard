@@ -63,9 +63,15 @@ export interface BalanceInfo {
   };
 }
 
+export interface FraudCheckAlert {
+  type: string;
+  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  description: string;
+}
+
 export interface FraudCheckResult {
   flagged: boolean;
-  alerts: string[];
+  alerts: FraudCheckAlert[];
 }
 
 interface TransactionResponse {

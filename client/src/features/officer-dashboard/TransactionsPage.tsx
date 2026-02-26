@@ -183,7 +183,7 @@ function MemberSearch({ selectedId, onSelect }: { selectedId: string; onSelect: 
 // ═══════════════════════════════════════════════════════════════════
 // FRAUD RESULT BANNER
 // ═══════════════════════════════════════════════════════════════════
-function FraudBanner({ flagged, alerts }: { flagged: boolean; alerts: string[] }) {
+function FraudBanner({ flagged, alerts }: { flagged: boolean; alerts: Array<{ type: string; severity: string; description: string }> }) {
   if (!flagged) return null;
   return (
     <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-4">
@@ -193,7 +193,9 @@ function FraudBanner({ flagged, alerts }: { flagged: boolean; alerts: string[] }
       </div>
       <ul className="mt-2 space-y-1">
         {alerts.map((a, i) => (
-          <li key={i} className="text-xs text-red-300">• {a}</li>
+          <li key={i} className="text-xs text-red-300">
+            • <span className="font-semibold">[{a.severity}]</span> {a.description}
+          </li>
         ))}
       </ul>
     </div>
@@ -208,7 +210,7 @@ function DepositForm({ onSuccess }: { onSuccess: () => void }) {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
-  const [fraudResult, setFraudResult] = useState<{ flagged: boolean; alerts: string[] } | null>(null);
+  const [fraudResult, setFraudResult] = useState<{ flagged: boolean; alerts: Array<{ type: string; severity: string; description: string }> } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -271,7 +273,7 @@ function WithdrawForm({ onSuccess }: { onSuccess: () => void }) {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
-  const [fraudResult, setFraudResult] = useState<{ flagged: boolean; alerts: string[] } | null>(null);
+  const [fraudResult, setFraudResult] = useState<{ flagged: boolean; alerts: Array<{ type: string; severity: string; description: string }> } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -336,7 +338,7 @@ function LoanApplyForm({ onSuccess }: { onSuccess: () => void }) {
   const [termMonths, setTermMonths] = useState("12");
   const [purpose, setPurpose] = useState("");
   const [loading, setLoading] = useState(false);
-  const [fraudResult, setFraudResult] = useState<{ flagged: boolean; alerts: string[] } | null>(null);
+  const [fraudResult, setFraudResult] = useState<{ flagged: boolean; alerts: Array<{ type: string; severity: string; description: string }> } | null>(null);
 
   const monthlyPayment = (() => {
     const p = Number(amount), r = Number(interestRate) / 100 / 12, n = Number(termMonths);
@@ -430,7 +432,7 @@ function LoanRepayForm({ onSuccess }: { onSuccess: () => void }) {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingLoans, setLoadingLoans] = useState(true);
-  const [fraudResult, setFraudResult] = useState<{ flagged: boolean; alerts: string[] } | null>(null);
+  const [fraudResult, setFraudResult] = useState<{ flagged: boolean; alerts: Array<{ type: string; severity: string; description: string }> } | null>(null);
 
   useEffect(() => {
     fetchLoans({ status: "ACTIVE" })
