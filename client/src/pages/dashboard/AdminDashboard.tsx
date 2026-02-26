@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import DashboardLayout, { type NavItem } from "@/components/dashboard/DashboardLayout";
 import StatCard from "@/components/dashboard/StatCard";
 import {
@@ -12,57 +13,133 @@ import {
   Database,
   TrendingUp,
   Activity,
+  Loader2,
 } from "lucide-react";
+import { fetchAdminStats, fetchFraudAlerts } from "@/services/adminService";
+import UserManagement from "@/features/admin-dashboard/UserManagement";
+import FraudAlerts from "@/features/admin-dashboard/FraudAlerts";
+import AuditLogs from "@/features/admin-dashboard/AuditLogs";
+import Analytics from "@/features/admin-dashboard/Analytics";
+import RiskPolicies from "@/features/admin-dashboard/RiskPolicies";
+import SystemConfig from "@/features/admin-dashboard/SystemConfig";
+import RoleManagement from "@/features/admin-dashboard/RoleManagement";
+import DataExports from "@/features/admin-dashboard/DataExports";
 
-const navItems: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, active: true },
-  { label: "User Management", icon: Users },
-  { label: "Fraud Alerts", icon: AlertTriangle },
-  { label: "Audit Logs", icon: FileText },
-  { label: "Analytics", icon: BarChart3 },
-  { label: "Risk Policies", icon: ShieldCheck },
-  { label: "System Config", icon: Settings },
-  { label: "Role Management", icon: UserCog },
-  { label: "Data Exports", icon: Database },
-];
+type AdminView = "dashboard" | "users" | "fraud" | "audit" | "analytics" | "risk" | "config" | "roles" | "exports";
+
+const viewTitles: Record<AdminView, string> = {
+  dashboard: "Dashboard Overview",
+  users: "User Management",
+  fraud: "Fraud Alerts",
+  audit: "Audit Logs",
+  analytics: "Analytics",
+  risk: "Risk Policies",
+  config: "System Configuration",
+  roles: "Role Management",
+  exports: "Data Exports",
+};
 
 export default function AdminDashboard() {
+  const [activeView, setActiveView] = useState<AdminView>("dashboard");
+
+  const navItems: NavItem[] = [
+    { label: "Dashboard", icon: LayoutDashboard, active: activeView === "dashboard", onClick: () => setActiveView("dashboard") },
+    { label: "User Management", icon: Users, active: activeView === "users", onClick: () => setActiveView("users") },
+    { label: "Fraud Alerts", icon: AlertTriangle, active: activeView === "fraud", onClick: () => setActiveView("fraud") },
+    { label: "Audit Logs", icon: FileText, active: activeView === "audit", onClick: () => setActiveView("audit") },
+    { label: "Analytics", icon: BarChart3, active: activeView === "analytics", onClick: () => setActiveView("analytics") },
+    { label: "Risk Policies", icon: ShieldCheck, active: activeView === "risk", onClick: () => setActiveView("risk") },
+    { label: "System Config", icon: Settings, active: activeView === "config", onClick: () => setActiveView("config") },
+    { label: "Role Management", icon: UserCog, active: activeView === "roles", onClick: () => setActiveView("roles") },
+    { label: "Data Exports", icon: Database, active: activeView === "exports", onClick: () => setActiveView("exports") },
+  ];
+
   return (
     <DashboardLayout
       navItems={navItems}
       roleLabel="System Administrator"
-      roleBadgeColor="bg-violet-500/10 text-violet-400 border border-violet-500/20"
+      roleBadgeColor="bg-violet-500/10 text-violet-400 dark:text-violet-400 border border-violet-500/20"
     >
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-foreground">{viewTitles[activeView]}</h2>
+      </div>
+
+      {activeView === "dashboard" && <DashboardOverview onNavigate={setActiveView} />}
+      {activeView === "users" && <UserManagement />}
+      {activeView === "fraud" && <FraudAlerts />}
+      {activeView === "audit" && <AuditLogs />}
+      {activeView === "analytics" && <Analytics />}
+      {activeView === "risk" && <RiskPolicies />}
+      {activeView === "config" && <SystemConfig />}
+      {activeView === "roles" && <RoleManagement />}
+      {activeView === "exports" && <DataExports />}
+    </DashboardLayout>
+  );
+}
+
+// ─── Dashboard Overview (with live data) ────────────────────────────────
+function DashboardOverview({ onNavigate }: { onNavigate: (v: AdminView) => void }) {
+  const [stats, setStats] = useState<Record<string, number> | null>(null);
+  const [recentAlerts, setRecentAlerts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [statsData, alertsData] = await Promise.all([
+          fetchAdminStats(),
+          fetchFraudAlerts({ resolved: "false" }),
+        ]);
+        setStats(statsData);
+        setRecentAlerts(alertsData.alerts?.slice(0, 4) || []);
+      } catch {
+        // Use fallback
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-sky-500" />
+      </div>
+    );
+  }
+
+  return (
+    <>
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           label="Total Users"
-          value="1,247"
-          change="+12% from last month"
+          value={stats?.totalUsers?.toLocaleString() || "0"}
+          change={`${stats?.totalMembers || 0} members`}
           changeType="positive"
           icon={Users}
           iconColor="bg-blue-500/10 text-blue-400"
         />
         <StatCard
           label="Fraud Alerts"
-          value="23"
-          change="+5 new today"
-          changeType="negative"
+          value={stats?.unresolvedAlerts?.toString() || "0"}
+          change={`${stats?.totalFraudAlerts || 0} total`}
+          changeType={stats?.unresolvedAlerts ? "negative" : "positive"}
           icon={AlertTriangle}
           iconColor="bg-red-500/10 text-red-400"
         />
         <StatCard
-          label="Resolved Cases"
-          value="187"
-          change="95% resolution rate"
-          changeType="positive"
+          label="Transactions"
+          value={stats?.totalTransactions?.toLocaleString() || "0"}
+          change={`${stats?.flaggedTransactions || 0} flagged`}
+          changeType={stats?.flaggedTransactions ? "negative" : "positive"}
           icon={ShieldCheck}
           iconColor="bg-sky-500/10 text-sky-400"
         />
         <StatCard
-          label="System Health"
-          value="99.9%"
-          change="All services operational"
+          label="Active Loans"
+          value={stats?.activeLoans?.toString() || "0"}
+          change={`${stats?.totalLoans || 0} total loans`}
           changeType="positive"
           icon={Activity}
           iconColor="bg-amber-500/10 text-amber-400"
@@ -70,125 +147,88 @@ export default function AdminDashboard() {
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Chart placeholder */}
-        <div className="lg:col-span-2 rounded-2xl border border-white/[0.06] bg-slate-900/50 p-6">
+        {/* Quick actions */}
+        <div className="lg:col-span-2 rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-white">Fraud Detection Trends</h3>
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <TrendingUp className="h-3.5 w-3.5" />
-              Last 30 days
-            </div>
+            <h3 className="text-sm font-semibold text-foreground">Quick Actions</h3>
           </div>
-          <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/[0.02]">
-            <div className="text-center text-slate-500">
-              <BarChart3 className="mx-auto h-10 w-10 mb-2 opacity-50" />
-              <p className="text-sm">Chart visualization</p>
-              <p className="text-xs">Fraud detection data over time</p>
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Manage Users", icon: Users, view: "users" as AdminView, color: "text-blue-500 dark:text-blue-400 bg-blue-500/10" },
+              { label: "View Alerts", icon: AlertTriangle, view: "fraud" as AdminView, color: "text-red-500 dark:text-red-400 bg-red-500/10" },
+              { label: "Analytics", icon: BarChart3, view: "analytics" as AdminView, color: "text-violet-500 dark:text-violet-400 bg-violet-500/10" },
+              { label: "Export Data", icon: Database, view: "exports" as AdminView, color: "text-teal-500 dark:text-teal-400 bg-teal-500/10" },
+            ].map((action) => (
+              <button
+                key={action.label}
+                onClick={() => onNavigate(action.view)}
+                className="flex flex-col items-center gap-2 rounded-xl border border-border bg-background p-4 hover:bg-accent transition-colors"
+              >
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${action.color}`}>
+                  <action.icon className="h-5 w-5" />
+                </div>
+                <span className="text-xs font-medium text-foreground">{action.label}</span>
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Recent alerts */}
-        <div className="rounded-2xl border border-white/[0.06] bg-slate-900/50 p-6">
-          <h3 className="text-sm font-semibold text-white mb-4">Recent Alerts</h3>
+        <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-foreground">Unresolved Alerts</h3>
+            <button
+              onClick={() => onNavigate("fraud")}
+              className="text-xs text-sky-500 dark:text-sky-400 hover:underline font-medium"
+            >
+              View All
+            </button>
+          </div>
           <div className="space-y-3">
-            {[
-              { text: "Suspicious transaction detected", time: "2 min ago", severity: "high" },
-              { text: "Multiple failed login attempts", time: "15 min ago", severity: "medium" },
-              { text: "Unusual withdrawal pattern", time: "1 hr ago", severity: "high" },
-              { text: "New device login", time: "3 hrs ago", severity: "low" },
-            ].map((alert, i) => (
-              <div
-                key={i}
-                className="flex items-start gap-3 rounded-xl border border-white/[0.04] bg-white/[0.02] p-3"
-              >
+            {recentAlerts.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4">No unresolved alerts</p>
+            ) : (
+              recentAlerts.map((alert: any) => (
                 <div
-                  className={`mt-0.5 h-2 w-2 rounded-full flex-shrink-0 ${
-                    alert.severity === "high"
-                      ? "bg-red-400"
-                      : alert.severity === "medium"
-                      ? "bg-amber-400"
-                      : "bg-blue-400"
-                  }`}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-slate-300 truncate">{alert.text}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">{alert.time}</p>
+                  key={alert.id}
+                  className="flex items-start gap-3 rounded-xl border border-border bg-background p-3"
+                >
+                  <div
+                    className={`mt-0.5 h-2 w-2 rounded-full flex-shrink-0 ${
+                      alert.severity === "CRITICAL" || alert.severity === "HIGH"
+                        ? "bg-red-400"
+                        : alert.severity === "MEDIUM"
+                        ? "bg-amber-400"
+                        : "bg-blue-400"
+                    }`}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-foreground truncate">{alert.description}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {alert.member?.fullName} — {new Date(alert.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
 
-      {/* Table placeholder */}
-      <div className="mt-6 rounded-2xl border border-white/[0.06] bg-slate-900/50 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-white">Recent Transactions</h3>
-          <button className="text-xs text-sky-400 hover:text-sky-300 font-medium">
-            View All
-          </button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/[0.06]">
-                {["Transaction ID", "Member", "Type", "Amount", "Risk Score", "Status"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="pb-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/[0.04]">
-              {[
-                { id: "TXN-001", member: "John Doe", type: "Withdrawal", amount: "KES 50,000", risk: 85, status: "Flagged" },
-                { id: "TXN-002", member: "Jane Smith", type: "Transfer", amount: "KES 120,000", risk: 42, status: "Cleared" },
-                { id: "TXN-003", member: "Peter Mwangi", type: "Deposit", amount: "KES 200,000", risk: 12, status: "Cleared" },
-                { id: "TXN-004", member: "Mary Achieng", type: "Withdrawal", amount: "KES 75,000", risk: 91, status: "Under Review" },
-              ].map((row) => (
-                <tr key={row.id} className="text-sm">
-                  <td className="py-3 text-slate-300 font-mono text-xs">{row.id}</td>
-                  <td className="py-3 text-white">{row.member}</td>
-                  <td className="py-3 text-slate-400">{row.type}</td>
-                  <td className="py-3 text-white font-medium">{row.amount}</td>
-                  <td className="py-3">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                        row.risk >= 80
-                          ? "bg-red-500/10 text-red-400"
-                          : row.risk >= 40
-                          ? "bg-amber-500/10 text-amber-400"
-                          : "bg-sky-500/10 text-sky-400"
-                      }`}
-                    >
-                      {row.risk}
-                    </span>
-                  </td>
-                  <td className="py-3">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        row.status === "Flagged"
-                          ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                          : row.status === "Cleared"
-                          ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
-                          : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                      }`}
-                    >
-                      {row.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* System overview */}
+      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Active Members", value: stats?.activeMembers || 0, color: "text-emerald-500 dark:text-emerald-400" },
+          { label: "Total Members", value: stats?.totalMembers || 0, color: "text-sky-500 dark:text-sky-400" },
+          { label: "Total Alerts", value: stats?.totalFraudAlerts || 0, color: "text-amber-500 dark:text-amber-400" },
+          { label: "System Users", value: stats?.totalUsers || 0, color: "text-violet-500 dark:text-violet-400" },
+        ].map((item) => (
+          <div key={item.label} className="rounded-2xl border border-border bg-card p-4 text-center">
+            <p className={`text-2xl font-bold ${item.color}`}>{item.value.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground mt-1">{item.label}</p>
+          </div>
+        ))}
       </div>
-    </DashboardLayout>
+    </>
   );
 }

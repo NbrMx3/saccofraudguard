@@ -1,7 +1,9 @@
-import { useState, useMemo, type ReactNode } from "react";
+import { useState, useMemo, useEffect, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/context/AuthContext";
 import ThemeToggle from "@/components/ThemeToggle";
+import NotificationPanel from "@/features/admin-dashboard/NotificationPanel";
+import { fetchNotifications } from "@/services/adminService";
 import {
   Shield,
   Bell,
@@ -38,12 +40,26 @@ export default function DashboardLayout({
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good Morning";
     if (hour < 17) return "Good Afternoon";
     return "Good Evening";
+  }, []);
+
+  // Fetch unread notification count
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await fetchNotifications();
+        setUnreadCount(data.unreadCount);
+      } catch {
+        // silently fail
+      }
+    })();
   }, []);
 
   const handleLogout = async () => {
@@ -57,7 +73,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="flex h-screen bg-[#0a1628] text-white overflow-hidden">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -68,23 +84,23 @@ export default function DashboardLayout({
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-sky-400/[0.06] bg-[#0d1a30]/80 backdrop-blur-xl transition-transform lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-card/80 backdrop-blur-xl transition-transform lg:static lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center justify-between px-5 border-b border-sky-400/[0.06]">
+        <div className="flex h-16 items-center justify-between px-5 border-b border-border">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10 border border-sky-400/20">
-              <Shield className="h-4 w-4 text-sky-400" />
+              <Shield className="h-4 w-4 text-sky-500 dark:text-sky-400" />
             </div>
-            <span className="text-sm font-bold tracking-tight">
-              Sacco<span className="text-sky-400">FraudGuard</span>
+            <span className="text-sm font-bold tracking-tight text-foreground">
+              Sacco<span className="text-sky-500 dark:text-sky-400">FraudGuard</span>
             </span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-slate-400 hover:text-white"
+            className="lg:hidden text-muted-foreground hover:text-foreground"
           >
             <X className="h-5 w-5" />
           </button>
@@ -106,11 +122,14 @@ export default function DashboardLayout({
             return (
               <button
                 key={item.label}
-                onClick={item.onClick}
+                onClick={() => {
+                  item.onClick?.();
+                  setSidebarOpen(false);
+                }}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                   item.active
-                    ? "bg-sky-500/10 text-sky-400 border border-sky-400/20"
-                    : "text-slate-400 hover:bg-white/5 hover:text-white border border-transparent"
+                    ? "bg-sky-500/10 text-sky-500 dark:text-sky-400 border border-sky-400/20"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground border border-transparent"
                 }`}
               >
                 <Icon className="h-4.5 w-4.5" />
@@ -121,17 +140,17 @@ export default function DashboardLayout({
         </nav>
 
         {/* User section at bottom */}
-        <div className="border-t border-sky-400/[0.06] p-4">
+        <div className="border-t border-border p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-500/10 border border-sky-400/20 text-sm font-bold text-sky-400">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-500/10 border border-sky-400/20 text-sm font-bold text-sky-500 dark:text-sky-400">
               {user?.firstName?.[0]}
               {user?.lastName?.[0]}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
+              <p className="text-sm font-medium text-foreground truncate">
                 {user?.firstName} {user?.lastName}
               </p>
-              <p className="text-xs text-slate-500 truncate">{user?.nationalId}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.nationalId}</p>
             </div>
           </div>
         </div>
@@ -140,15 +159,15 @@ export default function DashboardLayout({
       {/* Main area */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top navbar */}
-        <header className="flex h-16 items-center justify-between border-b border-sky-400/[0.06] bg-[#0d1a30]/50 backdrop-blur-xl px-4 lg:px-6 relative z-30">
+        <header className="flex h-16 items-center justify-between border-b border-border bg-card/50 backdrop-blur-xl px-4 lg:px-6 relative z-30">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-slate-400 hover:text-white"
+              className="lg:hidden text-muted-foreground hover:text-foreground"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <h1 className="text-lg font-semibold text-white hidden sm:block">
+            <h1 className="text-lg font-semibold text-foreground hidden sm:block">
               {greeting}, {user?.firstName} 👋
             </h1>
           </div>
@@ -157,20 +176,30 @@ export default function DashboardLayout({
             <ThemeToggle />
 
             {/* Notification bell */}
-            <button className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-400 hover:text-white transition-colors">
-              <Bell className="h-4 w-4" />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-sky-500 text-[10px] font-bold text-white">
-                3
-              </span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-accent/50 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-sky-500 text-[10px] font-bold text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+              {notificationsOpen && (
+                <NotificationPanel onClose={() => setNotificationsOpen(false)} />
+              )}
+            </div>
 
             {/* Profile dropdown */}
             <div className="relative">
               <button
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-300 hover:text-white transition-colors"
+                className="flex items-center gap-2 rounded-xl border border-border bg-accent/50 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/20 text-xs font-bold text-sky-400">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-500/20 text-xs font-bold text-sky-500 dark:text-sky-400">
                   {user?.firstName?.[0]}
                 </div>
                 <span className="hidden sm:inline">{user?.firstName}</span>
@@ -183,16 +212,16 @@ export default function DashboardLayout({
                     className="fixed inset-0 z-10"
                     onClick={() => setProfileOpen(false)}
                   />
-                  <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-xl border border-white/10 bg-slate-800 py-1 shadow-xl">
-                    <div className="px-4 py-2 border-b border-white/10">
-                      <p className="text-sm font-medium text-white">
+                  <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-xl border border-border bg-card py-1 shadow-xl">
+                    <div className="px-4 py-2 border-b border-border">
+                      <p className="text-sm font-medium text-foreground">
                         {user?.firstName} {user?.lastName}
                       </p>
-                      <p className="text-xs text-slate-400">{user?.email}</p>
+                      <p className="text-xs text-muted-foreground">{user?.email}</p>
                     </div>
                     <button
                       onClick={handleLogout}
-                      className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-white/5 transition-colors"
+                      className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-500 dark:text-red-400 hover:bg-accent transition-colors"
                     >
                       <LogOut className="h-4 w-4" />
                       Sign Out

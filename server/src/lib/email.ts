@@ -1,6 +1,11 @@
 import sgMail from "@sendgrid/mail";
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || "");
+const apiKey = process.env.SENDGRID_API_KEY;
+if (apiKey && apiKey.startsWith("SG.")) {
+  sgMail.setApiKey(apiKey);
+} else {
+  console.warn("SENDGRID_API_KEY not set or invalid – emails will be logged to console instead of sent.");
+}
 
 export async function sendPasswordResetEmail(
   to: string,
@@ -35,6 +40,12 @@ export async function sendPasswordResetEmail(
       </div>
     `,
   };
+
+  if (!apiKey || !apiKey.startsWith("SG.")) {
+    console.log("[Email] Would send password reset to:", to);
+    console.log("[Email] Reset link:", resetLink);
+    return;
+  }
 
   await sgMail.send(msg);
 }

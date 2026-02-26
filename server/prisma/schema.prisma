@@ -44,6 +44,11 @@ model User {
   createdMembers      Member[]      @relation("CreatedByOfficer")
   processedTransactions Transaction[] @relation("ProcessedByOfficer")
   approvedLoans       Loan[]        @relation("ApprovedByOfficer")
+  resolvedAlerts      FraudAlert[]  @relation("ResolvedByUser")
+  auditLogs           AuditLog[]    @relation("AuditLogUser")
+  notifications       Notification[] @relation("UserNotifications")
+  investigations      CaseInvestigation[] @relation("InvestigatedByUser")
+  documents           Document[]    @relation("UploadedByUser")
 
   @@map("users")
 }
@@ -147,12 +152,115 @@ model FraudAlert {
   severity      FraudSeverity
   description   String
   resolved      Boolean       @default(false)
+  resolvedById  String?       @map("resolved_by_id")
+  resolvedBy    User?         @relation("ResolvedByUser", fields: [resolvedById], references: [id])
+  resolvedAt    DateTime?     @map("resolved_at")
   memberId      String        @map("member_id")
   member        Member        @relation(fields: [memberId], references: [id])
   transactionId String?       @map("transaction_id")
   transaction   Transaction?  @relation(fields: [transactionId], references: [id])
+  case          CaseInvestigation? @relation("AlertCase")
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
   @@map("fraud_alerts")
+}
+
+// ─── Audit Log ──────────────────────────────────────────────────────────
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String
+  entity      String
+  entityId    String?  @map("entity_id")
+  details     String?
+  ipAddress   String?  @map("ip_address")
+  userId      String   @map("user_id")
+  user        User     @relation("AuditLogUser", fields: [userId], references: [id])
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}
+
+// ─── Notifications ──────────────────────────────────────────────────────
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  type      String   @default("info")  // info, warning, error, success
+  read      Boolean  @default(false)
+  userId    String   @map("user_id")
+  user      User     @relation("UserNotifications", fields: [userId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
+
+// ─── Risk Policies ──────────────────────────────────────────────────────
+model RiskPolicy {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  enabled     Boolean  @default(true)
+  threshold   Float?
+  severity    FraudSeverity @default(MEDIUM)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("risk_policies")
+}
+
+// ─── System Config ──────────────────────────────────────────────────────
+model SystemConfig {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  label String
+  group String @default("general")
+
+  @@map("system_config")
+}
+
+// ─── Case Investigation ─────────────────────────────────────────────────
+enum CaseStatus {
+  OPEN
+  IN_PROGRESS
+  ESCALATED
+  CLOSED
+  DISMISSED
+}
+
+model CaseInvestigation {
+  id            String      @id @default(cuid())
+  caseRef       String      @unique @map("case_ref")
+  title         String
+  description   String
+  status        CaseStatus  @default(OPEN)
+  priority      FraudSeverity @default(MEDIUM)
+  findings      String?
+  resolution    String?
+  alertId       String?     @unique @map("alert_id")
+  alert         FraudAlert? @relation("AlertCase", fields: [alertId], references: [id])
+  assignedToId  String      @map("assigned_to_id")
+  assignedTo    User        @relation("InvestigatedByUser", fields: [assignedToId], references: [id])
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  @@map("case_investigations")
+}
+
+// ─── Documents ──────────────────────────────────────────────────────────
+model Document {
+  id          String   @id @default(cuid())
+  name        String
+  fileName    String   @map("file_name")
+  fileSize    Int      @map("file_size")
+  mimeType    String   @map("mime_type")
+  category    String   @default("general")
+  description String?
+  data        Bytes
+  uploadedById String  @map("uploaded_by_id")
+  uploadedBy  User     @relation("UploadedByUser", fields: [uploadedById], references: [id])
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("documents")
 }
