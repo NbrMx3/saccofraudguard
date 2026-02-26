@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { exportData } from "@/services/adminService";
-import { Database, Download, FileJson, FileSpreadsheet, Loader2 } from "lucide-react";
+import { Database, FileJson, FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const entities = [

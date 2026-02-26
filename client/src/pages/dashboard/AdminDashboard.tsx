@@ -11,7 +11,6 @@ import {
   FileText,
   UserCog,
   Database,
-  TrendingUp,
   Activity,
   Loader2,
 } from "lucide-react";
