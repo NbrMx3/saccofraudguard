@@ -49,6 +49,8 @@ model User {
   notifications       Notification[] @relation("UserNotifications")
   investigations      CaseInvestigation[] @relation("InvestigatedByUser")
   documents           Document[]    @relation("UploadedByUser")
+  auditReviews        AuditReview[] @relation("ReviewedByAuditor")
+  complianceReports   ComplianceReport[] @relation("GeneratedByAuditor")
 
   @@map("users")
 }
@@ -263,4 +265,62 @@ model Document {
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("documents")
+}
+
+// ─── Audit Review ───────────────────────────────────────────────────────
+enum ReviewStatus {
+  DRAFT
+  IN_PROGRESS
+  UNDER_REVIEW
+  COMPLETED
+  ARCHIVED
+}
+
+enum ReviewCategory {
+  FINANCIAL
+  COMPLIANCE
+  SECURITY
+  RISK
+  OPERATIONAL
+}
+
+model AuditReview {
+  id              String         @id @default(cuid())
+  reviewRef       String         @unique @map("review_ref")
+  title           String
+  description     String
+  category        ReviewCategory @default(FINANCIAL)
+  status          ReviewStatus   @default(DRAFT)
+  riskLevel       FraudSeverity  @default(MEDIUM)
+  findings        String?
+  recommendations String?
+  reviewerId      String         @map("reviewer_id")
+  reviewer        User           @relation("ReviewedByAuditor", fields: [reviewerId], references: [id])
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  @@map("audit_reviews")
+}
+
+// ─── Compliance Report ──────────────────────────────────────────────────
+enum ReportStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model ComplianceReport {
+  id            String       @id @default(cuid())
+  reportRef     String       @unique @map("report_ref")
+  title         String
+  category      String
+  period        String
+  summary       String
+  content       String
+  status        ReportStatus @default(DRAFT)
+  generatedById String       @map("generated_by_id")
+  generatedBy   User         @relation("GeneratedByAuditor", fields: [generatedById], references: [id])
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  @@map("compliance_reports")
 }
