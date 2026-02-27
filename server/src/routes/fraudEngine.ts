@@ -1,6 +1,6 @@
 import { Router, type Response, type Router as RouterType } from "express";
 import { type AuthRequest, authenticate, authorize } from "../middleware/auth.js";
-import prisma from "../lib/prisma.js";
+import prisma, { withRetry } from "../lib/prisma.js";
 
 const router: RouterType = Router();
 

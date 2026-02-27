@@ -73,6 +73,19 @@ app.get("/", (_req: Request, res: Response) => {
   res.json({ message: "Welcome to SaccoFraudGuard API" });
 });
 
+// Global error handlers to prevent crash on Neon connection drops
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+  // Only exit on truly fatal errors, not connection drops
+  if (!String(err.message).includes("closed the connection") && !String(err.message).includes("ECONNRESET")) {
+    process.exit(1);
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
