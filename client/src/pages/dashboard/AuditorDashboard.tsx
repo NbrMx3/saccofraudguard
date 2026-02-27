@@ -8,6 +8,7 @@ import InvestigationsPage from "@/features/auditor-dashboard/InvestigationsPage"
 import AuditTrailPage from "@/features/auditor-dashboard/AuditTrailPage";
 import ComplianceReportsPage from "@/features/auditor-dashboard/ComplianceReportsPage";
 import ExportDataPage from "@/features/auditor-dashboard/ExportDataPage";
+import TransactionMonitoringPage from "@/features/auditor-dashboard/TransactionMonitoringPage";
 import RuleEnginePage from "@/features/fraud-engine/RuleEnginePage";
 import BehaviorAnalysisPage from "@/features/fraud-engine/BehaviorAnalysisPage";
 import RiskScoringPage from "@/features/fraud-engine/RiskScoringPage";
@@ -29,9 +30,10 @@ import {
   Activity,
   Gauge,
   Brain,
+  ArrowRightLeft,
 } from "lucide-react";
 
-type AuditorView = "dashboard" | "audit-reviews" | "compliance" | "fraud-reports" | "investigations" | "audit-trail" | "compliance-reports" | "export-data" | "rule-engine" | "behavior-analysis" | "risk-scoring" | "decision-logic";
+type AuditorView = "dashboard" | "audit-reviews" | "compliance" | "fraud-reports" | "investigations" | "audit-trail" | "compliance-reports" | "export-data" | "transaction-monitoring" | "rule-engine" | "behavior-analysis" | "risk-scoring" | "decision-logic";
 
 export default function AuditorDashboard() {
   const [currentView, setCurrentView] = useState<AuditorView>("dashboard");
@@ -58,6 +60,7 @@ export default function AuditorDashboard() {
 
   const navItems: NavItem[] = useMemo(() => [
     { label: "Dashboard", icon: LayoutDashboard, active: currentView === "dashboard", onClick: () => setCurrentView("dashboard") },
+    { label: "Transactions", icon: ArrowRightLeft, active: currentView === "transaction-monitoring", onClick: () => setCurrentView("transaction-monitoring") },
     { label: "Audit Reviews", icon: FileSearch, active: currentView === "audit-reviews", onClick: () => setCurrentView("audit-reviews") },
     { label: "Compliance", icon: Scale, active: currentView === "compliance", onClick: () => setCurrentView("compliance") },
     { label: "Fraud Reports", icon: AlertTriangle, active: currentView === "fraud-reports", onClick: () => setCurrentView("fraud-reports") },
@@ -78,6 +81,7 @@ export default function AuditorDashboard() {
       roleLabel="Auditor"
       roleBadgeColor="bg-amber-500/10 text-amber-400 border border-amber-500/20"
     >
+      {currentView === "transaction-monitoring" && <TransactionMonitoringPage />}
       {currentView === "audit-reviews" && <AuditReviewsPage />}
       {currentView === "compliance" && <CompliancePage />}
       {currentView === "fraud-reports" && <FraudReportsPage />}

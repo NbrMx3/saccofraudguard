@@ -523,4 +523,218 @@ router.get("/stats", async (req: AuthRequest, res: Response) => {
   }
 });
 
+// ─── TRANSACTION MONITORING (read-only for auditors) ───────────────────────
+
+// GET /transactions — list all transactions with filters (auditor read-only)
+router.get("/transactions", async (req: AuthRequest, res: Response) => {
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const type = req.query.type as string | undefined;
+    const status = req.query.status as string | undefined;
+    const memberId = req.query.memberId as string | undefined;
+    const search = req.query.search as string | undefined;
+    const dateFrom = req.query.dateFrom as string | undefined;
+    const dateTo = req.query.dateTo as string | undefined;
+    const minAmount = req.query.minAmount ? Number(req.query.minAmount) : undefined;
+    const maxAmount = req.query.maxAmount ? Number(req.query.maxAmount) : undefined;
+
+    const where: any = {};
+
+    if (type && ["DEPOSIT", "WITHDRAWAL", "LOAN_DISBURSEMENT", "LOAN_REPAYMENT"].includes(type)) {
+      where.type = type;
+    }
+    if (status && ["COMPLETED", "PENDING", "FAILED", "FLAGGED"].includes(status)) {
+      where.status = status;
+    }
+    if (memberId) where.memberId = memberId;
+
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) where.createdAt.gte = new Date(dateFrom);
+      if (dateTo) {
+        const to = new Date(dateTo);
+        to.setHours(23, 59, 59, 999);
+        where.createdAt.lte = to;
+      }
+    }
+
+    if (minAmount !== undefined || maxAmount !== undefined) {
+      where.amount = {};
+      if (minAmount !== undefined) where.amount.gte = minAmount;
+      if (maxAmount !== undefined) where.amount.lte = maxAmount;
+    }
+
+    if (search) {
+      where.OR = [
+        { txRef: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+        { member: { fullName: { contains: search, mode: "insensitive" } } },
+        { member: { memberId: { contains: search, mode: "insensitive" } } },
+      ];
+    }
+
+    const [transactions, total] = await Promise.all([
+      prisma.transaction.findMany({
+        where,
+        select: {
+          id: true,
+          txRef: true,
+          type: true,
+          amount: true,
+          balanceBefore: true,
+          balanceAfter: true,
+          description: true,
+          status: true,
+          createdAt: true,
+          member: { select: { id: true, memberId: true, fullName: true, status: true } },
+          processedBy: { select: { firstName: true, lastName: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.transaction.count({ where }),
+    ]);
+
+    res.json({
+      transactions,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /transactions/stats — aggregate stats for auditor transaction monitoring
+router.get("/transactions/stats", async (_req: AuthRequest, res: Response) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const [
+      totalTransactions,
+      todayTransactions,
+      flaggedTransactions,
+      totalVolume,
+      todayDeposits,
+      todayWithdrawals,
+      byType,
+      byStatus,
+      last30Days,
+    ] = await Promise.all([
+      prisma.transaction.count(),
+      prisma.transaction.count({ where: { createdAt: { gte: today } } }),
+      prisma.transaction.count({ where: { status: "FLAGGED" } }),
+      prisma.transaction.aggregate({ _sum: { amount: true } }),
+      prisma.transaction.aggregate({
+        where: { type: "DEPOSIT", createdAt: { gte: today } },
+        _sum: { amount: true },
+      }),
+      prisma.transaction.aggregate({
+        where: { type: "WITHDRAWAL", createdAt: { gte: today } },
+        _sum: { amount: true },
+      }),
+      prisma.transaction.groupBy({
+        by: ["type"],
+        _count: { id: true },
+        _sum: { amount: true },
+      }),
+      prisma.transaction.groupBy({
+        by: ["status"],
+        _count: { id: true },
+      }),
+      prisma.transaction.count({
+        where: { createdAt: { gte: thirtyDaysAgo } },
+      }),
+    ]);
+
+    res.json({
+      totalTransactions,
+      todayTransactions,
+      flaggedTransactions,
+      totalVolume: totalVolume._sum.amount ?? 0,
+      todayDeposits: todayDeposits._sum.amount ?? 0,
+      todayWithdrawals: todayWithdrawals._sum.amount ?? 0,
+      last30DaysCount: last30Days,
+      byType: byType.reduce((acc: any, t) => {
+        acc[t.type] = { count: t._count.id, volume: t._sum.amount ?? 0 };
+        return acc;
+      }, {}),
+      byStatus: byStatus.reduce((acc: any, s) => {
+        acc[s.status] = s._count.id;
+        return acc;
+      }, {}),
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /transactions/:id — single transaction detail
+router.get("/transactions/:id", async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+
+    const transaction = await prisma.transaction.findUnique({
+      where: { id },
+      include: {
+        member: {
+          select: {
+            id: true,
+            memberId: true,
+            fullName: true,
+            email: true,
+            phoneNumber: true,
+            status: true,
+            balance: true,
+          },
+        },
+        processedBy: { select: { firstName: true, lastName: true, email: true } },
+        loan: {
+          select: {
+            loanRef: true,
+            amount: true,
+            outstandingBalance: true,
+            status: true,
+          },
+        },
+        fraudAlerts: {
+          select: {
+            id: true,
+            type: true,
+            severity: true,
+            description: true,
+            resolved: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    if (!transaction) {
+      res.status(404).json({ error: "Transaction not found" });
+      return;
+    }
+
+    await logAction(
+      req.user!.userId,
+      "VIEW_TRANSACTION",
+      "Transaction",
+      transaction.id,
+      `Auditor viewed transaction ${transaction.txRef}`,
+      req.ip
+    );
+
+    res.json(transaction);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 export default router;
