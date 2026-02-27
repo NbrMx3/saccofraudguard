@@ -197,8 +197,8 @@
 /* Grid mosaic on shield */
 .cyber-grid-mosaic {
   background-image:
-    linear-gradient(rgba(56,189,248,0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56,189,248,0.12) 1px, transparent 1px);
+    linear-gradient(rgba(0,229,255,0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.12) 1px, transparent 1px);
   background-size: 8px 8px;
   mask: radial-gradient(ellipse at center, black 30%, transparent 70%);
   -webkit-mask: radial-gradient(ellipse at center, black 30%, transparent 70%);
@@ -224,7 +224,7 @@
   left: -100%;
   width: 50%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(56,189,248,0.04), transparent);
+  background: linear-gradient(90deg, transparent, rgba(0,229,255,0.04), transparent);
   transition: left 0.6s ease;
 }
 .cyber-card-glow:hover::before {

@@ -62,7 +62,7 @@ export default function FloatingIcons({ className = '' }: FloatingIconsProps) {
         >
           <item.Icon
             style={{ width: item.size, height: item.size }}
-            className="text-sky-400/15 drop-shadow-[0_0_8px_rgba(56,189,248,0.15)]"
+            className="text-cyan-400/15 drop-shadow-[0_0_8px_rgba(0,229,255,0.15)]"
           />
         </div>
       ))}

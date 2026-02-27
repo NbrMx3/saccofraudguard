@@ -8,24 +8,39 @@ interface Particle {
   size: number
 }
 
+/** Binary digit falling column */
+interface BinaryColumn {
+  x: number
+  y: number
+  speed: number
+  chars: string[]
+  opacity: number
+  fontSize: number
+}
+
 interface CyberBackgroundProps {
   particleCount?: number
   connectionDistance?: number
   className?: string
   color?: [number, number, number] // RGB
   opacity?: number
+  showBinary?: boolean
+  binaryColumns?: number
 }
 
 export default function CyberBackground({
   particleCount = 55,
   connectionDistance = 140,
   className = '',
-  color = [56, 189, 248], // sky-400
+  color = [0, 229, 255], // cyan #00e5ff
   opacity = 1,
+  showBinary = true,
+  binaryColumns = 30,
 }: CyberBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number>(0)
   const particlesRef = useRef<Particle[]>([])
+  const binaryRef = useRef<BinaryColumn[]>([])
   const mouseRef = useRef({ x: -1000, y: -1000 })
 
   useEffect(() => {
@@ -65,6 +80,21 @@ export default function CyberBackground({
       size: Math.random() * 2 + 0.8,
     }))
 
+    // Initialize binary columns
+    if (showBinary) {
+      binaryRef.current = Array.from({ length: binaryColumns }, () => {
+        const colLen = Math.floor(Math.random() * 8) + 4
+        return {
+          x: Math.random() * w,
+          y: Math.random() * h * 2 - h,
+          speed: Math.random() * 0.3 + 0.15,
+          chars: Array.from({ length: colLen }, () => (Math.random() > 0.5 ? '1' : '0')),
+          opacity: Math.random() * 0.08 + 0.03,
+          fontSize: Math.random() * 4 + 10,
+        }
+      })
+    }
+
     const [r, g, b] = color
 
     const animate = () => {
@@ -72,12 +102,36 @@ export default function CyberBackground({
       const h = canvas.offsetHeight
       ctx.clearRect(0, 0, w, h)
 
+      // ── Binary rain ─────────────────────────────
+      if (showBinary) {
+        for (const col of binaryRef.current) {
+          ctx.font = `${col.fontSize}px monospace`
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${col.opacity * opacity})`
+          for (let j = 0; j < col.chars.length; j++) {
+            const cy = col.y + j * (col.fontSize + 2)
+            if (cy > -col.fontSize && cy < h + col.fontSize) {
+              ctx.fillText(col.chars[j], col.x, cy)
+            }
+          }
+          col.y += col.speed
+          // Reset column when it scrolls off
+          const totalHeight = col.chars.length * (col.fontSize + 2)
+          if (col.y > h + totalHeight) {
+            col.y = -totalHeight
+            col.x = Math.random() * w
+            // Re-randomize chars
+            for (let k = 0; k < col.chars.length; k++) {
+              col.chars[k] = Math.random() > 0.5 ? '1' : '0'
+            }
+          }
+        }
+      }
+
+      // ── Particles ───────────────────────────────
       const particles = particlesRef.current
       const mouse = mouseRef.current
 
-      // Update positions
       for (const p of particles) {
-        // Mouse repulsion
         const dx = p.x - mouse.x
         const dy = p.y - mouse.y
         const mouseDist = Math.sqrt(dx * dx + dy * dy)
@@ -86,14 +140,10 @@ export default function CyberBackground({
           p.vx += (dx / mouseDist) * force * 0.02
           p.vy += (dy / mouseDist) * force * 0.02
         }
-
-        // Damping
         p.vx *= 0.999
         p.vy *= 0.999
-
         p.x += p.vx
         p.y += p.vy
-
         if (p.x < 0) { p.x = 0; p.vx *= -1 }
         if (p.x > w) { p.x = w; p.vx *= -1 }
         if (p.y < 0) { p.y = 0; p.vy *= -1 }
@@ -107,7 +157,7 @@ export default function CyberBackground({
           const dy = particles[i].y - particles[j].y
           const dist = Math.sqrt(dx * dx + dy * dy)
           if (dist < connectionDistance) {
-            const alpha = (1 - dist / connectionDistance) * 0.25 * opacity
+            const alpha = (1 - dist / connectionDistance) * 0.2 * opacity
             ctx.beginPath()
             ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`
             ctx.lineWidth = 0.6
@@ -124,7 +174,7 @@ export default function CyberBackground({
         const dy = p.y - mouse.y
         const dist = Math.sqrt(dx * dx + dy * dy)
         if (dist < connectionDistance * 1.2) {
-          const alpha = (1 - dist / (connectionDistance * 1.2)) * 0.4 * opacity
+          const alpha = (1 - dist / (connectionDistance * 1.2)) * 0.35 * opacity
           ctx.beginPath()
           ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`
           ctx.lineWidth = 0.8
@@ -134,20 +184,18 @@ export default function CyberBackground({
         }
       }
 
-      // Draw particles
+      // Draw particles with glow
       for (const p of particles) {
-        // Glow
         const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 5)
-        gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${0.25 * opacity})`)
+        gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${0.2 * opacity})`)
         gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`)
         ctx.beginPath()
         ctx.fillStyle = gradient
         ctx.arc(p.x, p.y, p.size * 5, 0, Math.PI * 2)
         ctx.fill()
 
-        // Dot
         ctx.beginPath()
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.8 * opacity})`
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.7 * opacity})`
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
         ctx.fill()
       }
@@ -163,7 +211,7 @@ export default function CyberBackground({
       canvas.removeEventListener('mouseleave', handleMouseLeave)
       cancelAnimationFrame(animationRef.current)
     }
-  }, [particleCount, connectionDistance, color, opacity])
+  }, [particleCount, connectionDistance, color, opacity, showBinary, binaryColumns])
 
   return (
     <canvas

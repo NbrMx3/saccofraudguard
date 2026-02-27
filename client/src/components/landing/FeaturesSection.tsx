@@ -34,19 +34,19 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section id="features" className="relative bg-[#0a1628] py-24 sm:py-32">
+    <section id="features" className="relative bg-[#020a18] py-24 sm:py-32">
       {/* Subtle top border */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-sky-400/10 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-16 sm:mb-20">
-          <p className="text-sm font-semibold uppercase tracking-widest text-sky-400 mb-3">
+          <p className="text-sm font-semibold uppercase tracking-widest text-cyan-400 mb-3">
             Features
           </p>
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
             Everything you need to{' '}
-            <span className="bg-gradient-to-r from-sky-400 via-cyan-300 to-blue-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-cyan-400 via-teal-300 to-cyan-500 bg-clip-text text-transparent">
               detect fraud
             </span>
           </h2>
@@ -61,12 +61,12 @@ export default function FeaturesSection() {
           {features.map((feature, index) => (
             <div
               key={feature.title}
-              className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-7 transition-all duration-300 hover:bg-white/[0.04] hover:border-sky-400/20 hover:shadow-xl hover:shadow-sky-500/[0.03] cyber-card-glow"
+              className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-7 transition-all duration-300 hover:bg-white/[0.04] hover:border-cyan-400/20 hover:shadow-xl hover:shadow-cyan-500/[0.03] cyber-card-glow"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               {/* Icon */}
-              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-sky-500/10 border border-sky-400/20 group-hover:bg-sky-500/15 transition-colors">
-                <feature.icon className="h-6 w-6 text-sky-400" />
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-500/10 border border-cyan-400/20 group-hover:bg-cyan-500/15 transition-colors">
+                <feature.icon className="h-6 w-6 text-cyan-400" />
               </div>
 
               {/* Content */}
@@ -78,7 +78,7 @@ export default function FeaturesSection() {
               </p>
 
               {/* Hover corner accent */}
-              <div className="absolute top-0 right-0 h-16 w-16 rounded-tr-2xl bg-gradient-to-bl from-sky-500/[0.06] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute top-0 right-0 h-16 w-16 rounded-tr-2xl bg-gradient-to-bl from-cyan-500/[0.06] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           ))}
         </div>

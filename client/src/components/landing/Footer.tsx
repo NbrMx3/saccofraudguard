@@ -32,18 +32,18 @@ const footerLinks = [
 
 export default function Footer() {
   return (
-    <footer className="relative bg-[#081222] border-t border-sky-400/5">
+    <footer className="relative bg-[#010812] border-t border-cyan-400/5">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Main Footer Content */}
         <div className="grid gap-10 py-16 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8">
           {/* Brand Column */}
           <div className="sm:col-span-2 lg:col-span-2">
             <a href="/" className="flex items-center gap-2.5 group">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 border border-sky-400/20">
-                <Shield className="h-5 w-5 text-sky-400" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 border border-cyan-400/20">
+                <Shield className="h-5 w-5 text-cyan-400" />
               </div>
               <span className="text-lg font-bold text-white tracking-tight">
-                Sacco<span className="text-sky-400">FraudGuard</span>
+                Sacco<span className="text-cyan-400">FraudGuard</span>
               </span>
             </a>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-400">
