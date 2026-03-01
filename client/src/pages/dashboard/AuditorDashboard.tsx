@@ -68,11 +68,16 @@ export default function AuditorDashboard() {
     { label: "Audit Trail", icon: History, active: currentView === "audit-trail", onClick: () => setCurrentView("audit-trail") },
     { label: "Compliance Reports", icon: FileText, active: currentView === "compliance-reports", onClick: () => setCurrentView("compliance-reports") },
     { label: "Export Data", icon: Download, active: currentView === "export-data", onClick: () => setCurrentView("export-data") },
-    { label: "— Fraud Engine —", icon: Shield, active: false, onClick: () => {} },
-    { label: "Rule Engine", icon: Shield, active: currentView === "rule-engine", onClick: () => setCurrentView("rule-engine") },
-    { label: "Behavior Analysis", icon: Activity, active: currentView === "behavior-analysis", onClick: () => setCurrentView("behavior-analysis") },
-    { label: "Risk Scoring", icon: Gauge, active: currentView === "risk-scoring", onClick: () => setCurrentView("risk-scoring") },
-    { label: "Decision Logic", icon: Brain, active: currentView === "decision-logic", onClick: () => setCurrentView("decision-logic") },
+    {
+      label: "Rule Engine",
+      icon: Shield,
+      children: [
+        { label: "Rules", icon: Shield, active: currentView === "rule-engine", onClick: () => setCurrentView("rule-engine") },
+        { label: "Behavior Analysis", icon: Activity, active: currentView === "behavior-analysis", onClick: () => setCurrentView("behavior-analysis") },
+        { label: "Risk Scoring", icon: Gauge, active: currentView === "risk-scoring", onClick: () => setCurrentView("risk-scoring") },
+        { label: "Decision Logic", icon: Brain, active: currentView === "decision-logic", onClick: () => setCurrentView("decision-logic") },
+      ],
+    },
   ], [currentView]);
 
   return (

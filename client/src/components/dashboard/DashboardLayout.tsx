@@ -9,6 +9,7 @@ import {
   Bell,
   LogOut,
   ChevronDown,
+  ChevronRight,
   Menu,
   X,
   type LucideIcon,
@@ -21,6 +22,7 @@ export interface NavItem {
   href?: string;
   active?: boolean;
   onClick?: () => void;
+  children?: NavItem[];
 }
 
 interface DashboardLayoutProps {
@@ -42,6 +44,37 @@ export default function DashboardLayout({
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
+    // Auto-expand groups that have an active child
+    const expanded = new Set<string>();
+    navItems.forEach((item) => {
+      if (item.children?.some((c) => c.active)) expanded.add(item.label);
+    });
+    return expanded;
+  });
+
+  const toggleGroup = (label: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  };
+
+  // Auto-expand groups when a child becomes active
+  useEffect(() => {
+    navItems.forEach((item) => {
+      if (item.children?.some((c) => c.active)) {
+        setExpandedGroups((prev) => {
+          if (prev.has(item.label)) return prev;
+          const next = new Set(prev);
+          next.add(item.label);
+          return next;
+        });
+      }
+    });
+  }, [navItems]);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -119,6 +152,56 @@ export default function DashboardLayout({
         <nav className="flex-1 overflow-y-auto px-3 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
+
+            // Collapsible group with children
+            if (item.children && item.children.length > 0) {
+              const isExpanded = expandedGroups.has(item.label);
+              const hasActiveChild = item.children.some((c) => c.active);
+              return (
+                <div key={item.label} className="space-y-0.5">
+                  <button
+                    onClick={() => toggleGroup(item.label)}
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                      hasActiveChild
+                        ? "text-sky-500 dark:text-sky-400"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                    } border border-transparent`}
+                  >
+                    <Icon className="h-4.5 w-4.5" />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    <ChevronRight className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                      isExpanded ? "rotate-90" : ""
+                    }`} />
+                  </button>
+                  {isExpanded && (
+                    <div className="ml-4 border-l border-border pl-2 space-y-0.5">
+                      {item.children.map((child) => {
+                        const ChildIcon = child.icon;
+                        return (
+                          <button
+                            key={child.label}
+                            onClick={() => {
+                              child.onClick?.();
+                              setSidebarOpen(false);
+                            }}
+                            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium transition-colors ${
+                              child.active
+                                ? "bg-sky-500/10 text-sky-500 dark:text-sky-400 border border-sky-400/20"
+                                : "text-muted-foreground hover:bg-accent hover:text-foreground border border-transparent"
+                            }`}
+                          >
+                            <ChildIcon className="h-4 w-4" />
+                            {child.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Regular nav item
             return (
               <button
                 key={item.label}
