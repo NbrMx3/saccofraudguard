@@ -36,7 +36,7 @@ export default function FeaturesSection() {
   return (
     <section id="features" className="relative bg-[#020a18] py-24 sm:py-32">
       {/* Subtle top border */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-cyan-400/10 to-transparent" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -46,7 +46,7 @@ export default function FeaturesSection() {
           </p>
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
             Everything you need to{' '}
-            <span className="bg-gradient-to-r from-cyan-400 via-teal-300 to-cyan-500 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-cyan-400 via-teal-300 to-cyan-500 bg-clip-text text-transparent">
               detect fraud
             </span>
           </h2>
@@ -61,7 +61,7 @@ export default function FeaturesSection() {
           {features.map((feature, index) => (
             <div
               key={feature.title}
-              className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-7 transition-all duration-300 hover:bg-white/[0.04] hover:border-cyan-400/20 hover:shadow-xl hover:shadow-cyan-500/[0.03] cyber-card-glow"
+              className="group relative rounded-2xl border border-white/6 bg-white/2 p-7 transition-all duration-300 hover:bg-white/4 hover:border-cyan-400/20 hover:shadow-xl hover:shadow-cyan-500/3 cyber-card-glow"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               {/* Icon */}
@@ -78,7 +78,7 @@ export default function FeaturesSection() {
               </p>
 
               {/* Hover corner accent */}
-              <div className="absolute top-0 right-0 h-16 w-16 rounded-tr-2xl bg-gradient-to-bl from-cyan-500/[0.06] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute top-0 right-0 h-16 w-16 rounded-tr-2xl bg-linear-to-bl from-cyan-500/6 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           ))}
         </div>

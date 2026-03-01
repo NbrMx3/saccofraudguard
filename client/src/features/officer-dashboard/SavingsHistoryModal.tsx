@@ -31,9 +31,9 @@ export default function SavingsHistoryModal({ member, onClose }: SavingsHistoryM
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative z-10 w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-white/[0.06] bg-[#0d1a30] shadow-2xl">
+      <div className="relative z-10 w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-white/6 bg-[#0d1a30] shadow-2xl">
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-white/[0.06] p-6">
+        <div className="flex items-start justify-between border-b border-white/6 p-6">
           <div>
             <div className="flex items-center gap-2">
               <Wallet className="h-5 w-5 text-emerald-400" />
@@ -52,7 +52,7 @@ export default function SavingsHistoryModal({ member, onClose }: SavingsHistoryM
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-3 gap-3 border-b border-white/[0.06] p-6">
+        <div className="grid grid-cols-3 gap-3 border-b border-white/6 p-6">
           <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
             <p className="text-[10px] uppercase tracking-wider text-emerald-400/70">Current Balance</p>
             <p className="mt-1 text-lg font-bold text-emerald-400">
@@ -77,7 +77,7 @@ export default function SavingsHistoryModal({ member, onClose }: SavingsHistoryM
         <div className="flex-1 overflow-y-auto p-6">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.06]">
+              <tr className="border-b border-white/6">
                 {["Date", "Reference", "Type", "Amount", "Balance"].map((h) => (
                   <th
                     key={h}
@@ -88,7 +88,7 @@ export default function SavingsHistoryModal({ member, onClose }: SavingsHistoryM
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody className="divide-y divide-white/4">
               {sampleSavings.map((tx) => (
                 <tr key={tx.id} className="text-sm">
                   <td className="py-3 text-xs text-slate-400">

@@ -49,7 +49,7 @@ export default function AddMemberForm({ onMemberAdded }: AddMemberFormProps) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition-all hover:shadow-sky-500/30 hover:brightness-110"
+        className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-sky-500 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition-all hover:shadow-sky-500/30 hover:brightness-110"
       >
         <UserPlus className="h-4 w-4" />
         Add Member
@@ -58,7 +58,7 @@ export default function AddMemberForm({ onMemberAdded }: AddMemberFormProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-slate-900/50 p-6 backdrop-blur-sm">
+    <div className="rounded-2xl border border-white/6 bg-slate-900/50 p-6 backdrop-blur-sm">
       <div className="mb-5 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-white">Add New Member</h3>
         <button
@@ -130,7 +130,7 @@ export default function AddMemberForm({ onMemberAdded }: AddMemberFormProps) {
         <button
           type="submit"
           disabled={submitting}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition-all hover:shadow-sky-500/30 hover:brightness-110 disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-sky-500 to-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition-all hover:shadow-sky-500/30 hover:brightness-110 disabled:opacity-50"
         >
           {submitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />

@@ -36,6 +36,9 @@ dev-dist/
 # Prisma
 server/src/generated/
 
+# Vite
+.vite/
+
 # Misc
 *.map
 .cache/

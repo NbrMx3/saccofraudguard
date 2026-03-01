@@ -78,13 +78,13 @@ export default function GlowingShield({ className = '', size = 'lg' }: GlowingSh
     <div className={`relative flex items-center justify-center ${config.container} ${className}`}>
       {/* Deep radial glow layers */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-full h-full rounded-full bg-cyan-500/[0.07] blur-[80px] cyber-pulse" />
+        <div className="w-full h-full rounded-full bg-cyan-500/7 blur-[80px] cyber-pulse" />
       </div>
       <div className="absolute inset-[15%] flex items-center justify-center">
-        <div className="w-full h-full rounded-full bg-cyan-400/[0.12] blur-[50px] cyber-pulse" style={{ animationDelay: '1s' }} />
+        <div className="w-full h-full rounded-full bg-cyan-400/12 blur-[50px] cyber-pulse" style={{ animationDelay: '1s' }} />
       </div>
       <div className="absolute inset-[30%] flex items-center justify-center">
-        <div className="w-full h-full rounded-full bg-cyan-300/[0.15] blur-[30px] cyber-pulse" style={{ animationDelay: '2s' }} />
+        <div className="w-full h-full rounded-full bg-cyan-300/15 blur-[30px] cyber-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       {/* SVG concentric arcs */}

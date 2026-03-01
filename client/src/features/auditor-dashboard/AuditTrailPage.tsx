@@ -112,7 +112,7 @@ export default function AuditTrailPage() {
                           </div>
                           {log.details && <p className="text-xs text-muted-foreground mt-1 truncate">{log.details}</p>}
                         </div>
-                        <div className="text-right flex-shrink-0">
+                        <div className="text-right shrink-0">
                           <p className="text-[10px] text-muted-foreground">{new Date(log.createdAt).toLocaleTimeString()}</p>
                           {log.ipAddress && <p className="text-[10px] text-muted-foreground font-mono">{log.ipAddress}</p>}
                         </div>

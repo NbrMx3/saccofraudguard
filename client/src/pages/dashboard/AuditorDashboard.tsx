@@ -172,7 +172,7 @@ export default function AuditorDashboard() {
                         <div key={r.id} className="rounded-xl border border-border bg-background p-3">
                           <div className="flex items-start justify-between mb-1">
                             <p className="text-xs font-medium text-foreground truncate">{r.title}</p>
-                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ml-2 ${
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ml-2 ${
                               r.riskLevel === "CRITICAL" ? "bg-red-500/10 text-red-400"
                                 : r.riskLevel === "HIGH" ? "bg-orange-500/10 text-orange-400"
                                 : r.riskLevel === "MEDIUM" ? "bg-amber-500/10 text-amber-400"
@@ -195,7 +195,7 @@ export default function AuditorDashboard() {
               </div>
 
               {/* Fraud Detection Engine Card */}
-              <div className="mt-6 rounded-2xl border border-violet-500/20 bg-gradient-to-r from-violet-500/5 to-indigo-500/5 p-6">
+              <div className="mt-6 rounded-2xl border border-violet-500/20 bg-linear-to-r from-violet-500/5 to-indigo-500/5 p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Shield className="h-5 w-5 text-violet-400" />
                   <h3 className="text-sm font-semibold text-foreground">Fraud Detection Engine</h3>

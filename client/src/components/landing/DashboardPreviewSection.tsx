@@ -10,9 +10,9 @@ import {
 export default function DashboardPreviewSection() {
   return (
     <section id="dashboard" className="relative bg-[#020a18] py-24 sm:py-32 overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-cyan-400/10 to-transparent" />
       {/* Background glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-cyan-500/[0.04] rounded-full blur-[100px]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-100 bg-cyan-500/4 rounded-full blur-[100px]" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -22,7 +22,7 @@ export default function DashboardPreviewSection() {
           </p>
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
             Powerful analytics at your{' '}
-            <span className="bg-gradient-to-r from-cyan-400 via-cyan-300 to-cyan-500 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-cyan-400 via-cyan-300 to-cyan-500 bg-clip-text text-transparent">
               fingertips
             </span>
           </h2>
@@ -35,9 +35,9 @@ export default function DashboardPreviewSection() {
         {/* Dashboard Mockup */}
         <div className="relative mx-auto max-w-5xl">
           {/* Outer glow */}
-          <div className="absolute -inset-6 rounded-3xl bg-gradient-to-tr from-cyan-500/5 to-teal-500/5 blur-2xl" />
+          <div className="absolute -inset-6 rounded-3xl bg-linear-to-tr from-cyan-500/5 to-teal-500/5 blur-2xl" />
 
-          <div className="relative rounded-2xl border border-white/[0.08] bg-slate-900/70 shadow-2xl backdrop-blur-sm overflow-hidden">
+          <div className="relative rounded-2xl border border-white/8 bg-slate-900/70 shadow-2xl backdrop-blur-sm overflow-hidden">
             {/* Titlebar */}
             <div className="flex items-center gap-2 border-b border-white/5 px-6 py-3">
               <div className="flex gap-2">
@@ -87,7 +87,7 @@ export default function DashboardPreviewSection() {
                 ].map((stat) => (
                   <div
                     key={stat.label}
-                    className="rounded-xl border border-white/5 bg-white/[0.02] p-4"
+                    className="rounded-xl border border-white/5 bg-white/2 p-4"
                   >
                     <div className="flex items-center justify-between mb-3">
                       <stat.icon className="h-4 w-4 text-slate-500" />
@@ -105,7 +105,7 @@ export default function DashboardPreviewSection() {
               {/* Chart + Table */}
               <div className="grid gap-6 lg:grid-cols-5">
                 {/* Chart Area */}
-                <div className="lg:col-span-3 rounded-xl border border-white/5 bg-white/[0.02] p-5">
+                <div className="lg:col-span-3 rounded-xl border border-white/5 bg-white/2 p-5">
                   <div className="flex items-center justify-between mb-6">
                     <p className="text-sm font-semibold text-white">
                       Transaction Volume
@@ -122,7 +122,7 @@ export default function DashboardPreviewSection() {
                       (h, i) => (
                         <div
                           key={i}
-                          className="flex-1 rounded-t-md bg-gradient-to-t from-cyan-500/30 to-cyan-500/60 transition-all hover:from-cyan-500/40 hover:to-cyan-400/80"
+                          className="flex-1 rounded-t-md bg-linear-to-t from-cyan-500/30 to-cyan-500/60 transition-all hover:from-cyan-500/40 hover:to-cyan-400/80"
                           style={{ height: `${h}%` }}
                         />
                       )
@@ -139,7 +139,7 @@ export default function DashboardPreviewSection() {
                 </div>
 
                 {/* Fraud Alerts Table */}
-                <div className="lg:col-span-2 rounded-xl border border-white/5 bg-white/[0.02] overflow-hidden">
+                <div className="lg:col-span-2 rounded-xl border border-white/5 bg-white/2 overflow-hidden">
                   <div className="px-5 py-4 border-b border-white/5">
                     <p className="text-sm font-semibold text-white">
                       Fraud Alerts
@@ -178,7 +178,7 @@ export default function DashboardPreviewSection() {
                     ].map((alert, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between px-5 py-3 hover:bg-white/[0.02] transition-colors"
+                        className="flex items-center justify-between px-5 py-3 hover:bg-white/2 transition-colors"
                       >
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-white truncate">

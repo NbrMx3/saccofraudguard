@@ -150,7 +150,7 @@ export default function MemberListTable({
   };
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-slate-900/50 p-6 backdrop-blur-sm">
+    <div className="rounded-2xl border border-white/6 bg-slate-900/50 p-6 backdrop-blur-sm">
       {/* Header with search & filter */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-sm font-semibold text-white">Member Accounts</h3>
@@ -203,7 +203,7 @@ export default function MemberListTable({
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/[0.06]">
+                <tr className="border-b border-white/6">
                   {["Member ID", "Name", "Email", "Phone", "Status", "Joined", ""].map(
                     (h) => (
                       <th
@@ -216,7 +216,7 @@ export default function MemberListTable({
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.04]">
+              <tbody className="divide-y divide-white/4">
                 {members.map((m) => (
                   <tr key={m.id} className="group text-sm">
                     <td className="py-3 font-mono text-xs text-slate-300">
@@ -302,7 +302,7 @@ export default function MemberListTable({
                                 </button>
                               )}
 
-                              <div className="my-1 border-t border-white/[0.06]" />
+                              <div className="my-1 border-t border-white/6" />
 
                               <button
                                 onClick={() => {
@@ -326,7 +326,7 @@ export default function MemberListTable({
                                 Loan History
                               </button>
 
-                              <div className="my-1 border-t border-white/[0.06]" />
+                              <div className="my-1 border-t border-white/6" />
 
                               <button
                                 onClick={() => handleDelete(m)}
@@ -348,7 +348,7 @@ export default function MemberListTable({
 
           {/* Pagination */}
           {pagination.totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between border-t border-white/[0.06] pt-4">
+            <div className="mt-4 flex items-center justify-between border-t border-white/6 pt-4">
               <p className="text-xs text-slate-500">
                 Showing page {pagination.page} of {pagination.totalPages} ({pagination.total}{" "}
                 total members)

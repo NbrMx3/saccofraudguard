@@ -60,7 +60,7 @@ export default function MemberDetailModal({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/[0.06] bg-[#0d1a30] p-6 shadow-2xl">
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/6 bg-[#0d1a30] p-6 shadow-2xl">
         {/* Header */}
         <div className="mb-6 flex items-start justify-between">
           <div>
@@ -90,7 +90,7 @@ export default function MemberDetailModal({
 
         {/* Details */}
         <div className="space-y-4">
-          <div className="flex items-center gap-3 rounded-xl border border-white/[0.04] bg-white/[0.02] p-3">
+          <div className="flex items-center gap-3 rounded-xl border border-white/4 bg-white/2 p-3">
             <Mail className="h-4 w-4 text-slate-500" />
             <div>
               <p className="text-[10px] uppercase tracking-wider text-slate-500">Email</p>
@@ -98,7 +98,7 @@ export default function MemberDetailModal({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 rounded-xl border border-white/[0.04] bg-white/[0.02] p-3">
+          <div className="flex items-center gap-3 rounded-xl border border-white/4 bg-white/2 p-3">
             <Phone className="h-4 w-4 text-slate-500" />
             <div>
               <p className="text-[10px] uppercase tracking-wider text-slate-500">Phone</p>
@@ -106,7 +106,7 @@ export default function MemberDetailModal({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 rounded-xl border border-white/[0.04] bg-white/[0.02] p-3">
+          <div className="flex items-center gap-3 rounded-xl border border-white/4 bg-white/2 p-3">
             <Hash className="h-4 w-4 text-slate-500" />
             <div>
               <p className="text-[10px] uppercase tracking-wider text-slate-500">Member ID</p>
@@ -114,7 +114,7 @@ export default function MemberDetailModal({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 rounded-xl border border-white/[0.04] bg-white/[0.02] p-3">
+          <div className="flex items-center gap-3 rounded-xl border border-white/4 bg-white/2 p-3">
             <Calendar className="h-4 w-4 text-slate-500" />
             <div>
               <p className="text-[10px] uppercase tracking-wider text-slate-500">Joined</p>
@@ -130,7 +130,7 @@ export default function MemberDetailModal({
         </div>
 
         {/* Status Actions */}
-        <div className="mt-6 border-t border-white/[0.06] pt-5">
+        <div className="mt-6 border-t border-white/6 pt-5">
           <p className="mb-3 text-xs font-medium text-slate-400">Change Status</p>
           <div className="flex gap-2">
             {member.status !== "ACTIVE" && (
@@ -196,7 +196,7 @@ export default function MemberDetailModal({
         </div>
 
         {/* History Actions */}
-        <div className="mt-4 border-t border-white/[0.06] pt-5">
+        <div className="mt-4 border-t border-white/6 pt-5">
           <p className="mb-3 text-xs font-medium text-slate-400">Member History</p>
           <div className="flex gap-2">
             <button

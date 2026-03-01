@@ -90,7 +90,7 @@ export default function TransactionsPage() {
             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
               activeTab === key
                 ? "bg-sky-500/20 text-sky-400 border border-sky-500/30"
-                : "bg-slate-800/50 text-slate-400 border border-white/[0.06] hover:bg-slate-800 hover:text-slate-300"
+                : "bg-slate-800/50 text-slate-400 border border-white/6 hover:bg-slate-800 hover:text-slate-300"
             }`}
           >
             <Icon className="h-4 w-4" />
@@ -115,7 +115,7 @@ export default function TransactionsPage() {
 // ═══════════════════════════════════════════════════════════════════
 function StatsCard({ label, value, icon: Icon, colors }: { label: string; value: string | number; icon: React.ElementType; colors: string }) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-slate-900/50 p-4">
+    <div className="rounded-xl border border-white/6 bg-slate-900/50 p-4">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-slate-400">{label}</span>
         <span className={`rounded-lg p-2 ${colors}`}><Icon className="h-4 w-4" /></span>
@@ -154,11 +154,11 @@ function MemberSearch({ selectedId, onSelect }: { selectedId: string; onSelect: 
           value={query}
           onChange={(e) => { setQuery(e.target.value); if (selectedId) onSelect({ id: "" } as Member); }}
           placeholder="Search by name or member ID..."
-          className="w-full rounded-lg border border-white/[0.08] bg-slate-800/50 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30"
+          className="w-full rounded-lg border border-white/8 bg-slate-800/50 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30"
         />
       </div>
       {open && results.length > 0 && (
-        <div className="absolute z-30 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-white/[0.08] bg-slate-800 shadow-xl">
+        <div className="absolute z-30 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-white/8 bg-slate-800 shadow-xl">
           {results.map((m) => (
             <button
               key={m.id}
@@ -234,7 +234,7 @@ function DepositForm({ onSuccess }: { onSuccess: () => void }) {
   };
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-slate-900/50 p-6">
+    <div className="rounded-2xl border border-white/6 bg-slate-900/50 p-6">
       <div className="mb-5 flex items-center gap-3">
         <span className="rounded-lg bg-emerald-500/10 p-2 text-emerald-400"><ArrowDownToLine className="h-5 w-5" /></span>
         <div>
@@ -247,12 +247,12 @@ function DepositForm({ onSuccess }: { onSuccess: () => void }) {
         <div>
           <label className="mb-1.5 block text-sm font-medium text-slate-300">Amount (KES)</label>
           <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} min="1" step="any"
-            placeholder="0.00" className="w-full rounded-lg border border-white/[0.08] bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
+            placeholder="0.00" className="w-full rounded-lg border border-white/8 bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-slate-300">Description (optional)</label>
           <input type="text" value={description} onChange={(e) => setDescription(e.target.value)}
-            placeholder="e.g. Monthly savings deposit" className="w-full rounded-lg border border-white/[0.08] bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
+            placeholder="e.g. Monthly savings deposit" className="w-full rounded-lg border border-white/8 bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
         </div>
         <button disabled={loading} type="submit"
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50">
@@ -297,7 +297,7 @@ function WithdrawForm({ onSuccess }: { onSuccess: () => void }) {
   };
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-slate-900/50 p-6">
+    <div className="rounded-2xl border border-white/6 bg-slate-900/50 p-6">
       <div className="mb-5 flex items-center gap-3">
         <span className="rounded-lg bg-amber-500/10 p-2 text-amber-400"><ArrowUpFromLine className="h-5 w-5" /></span>
         <div>
@@ -310,12 +310,12 @@ function WithdrawForm({ onSuccess }: { onSuccess: () => void }) {
         <div>
           <label className="mb-1.5 block text-sm font-medium text-slate-300">Amount (KES)</label>
           <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} min="1" step="any"
-            placeholder="0.00" className="w-full rounded-lg border border-white/[0.08] bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
+            placeholder="0.00" className="w-full rounded-lg border border-white/8 bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-slate-300">Description (optional)</label>
           <input type="text" value={description} onChange={(e) => setDescription(e.target.value)}
-            placeholder="e.g. Emergency withdrawal" className="w-full rounded-lg border border-white/[0.08] bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
+            placeholder="e.g. Emergency withdrawal" className="w-full rounded-lg border border-white/8 bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
         </div>
         <button disabled={loading} type="submit"
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-500 disabled:opacity-50">
@@ -374,7 +374,7 @@ function LoanApplyForm({ onSuccess }: { onSuccess: () => void }) {
   };
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-slate-900/50 p-6">
+    <div className="rounded-2xl border border-white/6 bg-slate-900/50 p-6">
       <div className="mb-5 flex items-center gap-3">
         <span className="rounded-lg bg-sky-500/10 p-2 text-sky-400"><Landmark className="h-5 w-5" /></span>
         <div>
@@ -388,17 +388,17 @@ function LoanApplyForm({ onSuccess }: { onSuccess: () => void }) {
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-300">Loan Amount (KES)</label>
             <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} min="1" step="any"
-              placeholder="0.00" className="w-full rounded-lg border border-white/[0.08] bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
+              placeholder="0.00" className="w-full rounded-lg border border-white/8 bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-300">Interest Rate (%)</label>
             <input type="number" value={interestRate} onChange={(e) => setInterestRate(e.target.value)} min="0.1" step="0.1"
-              className="w-full rounded-lg border border-white/[0.08] bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
+              className="w-full rounded-lg border border-white/8 bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-300">Term (months)</label>
             <input type="number" value={termMonths} onChange={(e) => setTermMonths(e.target.value)} min="1" max="60"
-              className="w-full rounded-lg border border-white/[0.08] bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
+              className="w-full rounded-lg border border-white/8 bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
           </div>
         </div>
         {monthlyPayment > 0 && (
@@ -410,7 +410,7 @@ function LoanApplyForm({ onSuccess }: { onSuccess: () => void }) {
         <div>
           <label className="mb-1.5 block text-sm font-medium text-slate-300">Purpose (optional)</label>
           <input type="text" value={purpose} onChange={(e) => setPurpose(e.target.value)}
-            placeholder="e.g. Business expansion" className="w-full rounded-lg border border-white/[0.08] bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
+            placeholder="e.g. Business expansion" className="w-full rounded-lg border border-white/8 bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
         </div>
         <button disabled={loading} type="submit"
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sky-500 disabled:opacity-50">
@@ -468,7 +468,7 @@ function LoanRepayForm({ onSuccess }: { onSuccess: () => void }) {
   };
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-slate-900/50 p-6">
+    <div className="rounded-2xl border border-white/6 bg-slate-900/50 p-6">
       <div className="mb-5 flex items-center gap-3">
         <span className="rounded-lg bg-violet-500/10 p-2 text-violet-400"><HandCoins className="h-5 w-5" /></span>
         <div>
@@ -482,12 +482,12 @@ function LoanRepayForm({ onSuccess }: { onSuccess: () => void }) {
           {loadingLoans ? (
             <div className="flex items-center gap-2 text-sm text-slate-400"><RefreshCw className="h-4 w-4 animate-spin" /> Loading…</div>
           ) : loans.length === 0 ? (
-            <p className="rounded-lg border border-white/[0.06] bg-slate-800/30 p-4 text-center text-sm text-slate-500">No active loans found</p>
+            <p className="rounded-lg border border-white/6 bg-slate-800/30 p-4 text-center text-sm text-slate-500">No active loans found</p>
           ) : (
             <select
               value={selectedLoanId}
               onChange={(e) => setSelectedLoanId(e.target.value)}
-              className="w-full rounded-lg border border-white/[0.08] bg-slate-800/50 px-4 py-2.5 text-sm text-white outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30"
+              className="w-full rounded-lg border border-white/8 bg-slate-800/50 px-4 py-2.5 text-sm text-white outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30"
             >
               <option value="">-- Choose a loan --</option>
               {loans.map((l) => (
@@ -526,7 +526,7 @@ function LoanRepayForm({ onSuccess }: { onSuccess: () => void }) {
         <div>
           <label className="mb-1.5 block text-sm font-medium text-slate-300">Repayment Amount (KES)</label>
           <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} min="1" step="any"
-            placeholder="0.00" className="w-full rounded-lg border border-white/[0.08] bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
+            placeholder="0.00" className="w-full rounded-lg border border-white/8 bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
         </div>
         <button disabled={loading || loans.length === 0} type="submit"
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:opacity-50">
@@ -586,7 +586,7 @@ function TransactionHistoryTable({ refreshKey }: { refreshKey: number }) {
   };
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-slate-900/50 p-6">
+    <div className="rounded-2xl border border-white/6 bg-slate-900/50 p-6">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <span className="rounded-lg bg-indigo-500/10 p-2 text-indigo-400"><History className="h-5 w-5" /></span>
@@ -597,7 +597,7 @@ function TransactionHistoryTable({ refreshKey }: { refreshKey: number }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <select value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value as TransactionType | ""); setPage(1); }}
-            className="rounded-lg border border-white/[0.08] bg-slate-800/50 px-3 py-1.5 text-xs text-slate-300 outline-none focus:border-sky-500/50">
+            className="rounded-lg border border-white/8 bg-slate-800/50 px-3 py-1.5 text-xs text-slate-300 outline-none focus:border-sky-500/50">
             <option value="">All Types</option>
             <option value="DEPOSIT">Deposit</option>
             <option value="WITHDRAWAL">Withdrawal</option>
@@ -605,14 +605,14 @@ function TransactionHistoryTable({ refreshKey }: { refreshKey: number }) {
             <option value="LOAN_REPAYMENT">Loan Repayment</option>
           </select>
           <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value as TransactionStatus | ""); setPage(1); }}
-            className="rounded-lg border border-white/[0.08] bg-slate-800/50 px-3 py-1.5 text-xs text-slate-300 outline-none focus:border-sky-500/50">
+            className="rounded-lg border border-white/8 bg-slate-800/50 px-3 py-1.5 text-xs text-slate-300 outline-none focus:border-sky-500/50">
             <option value="">All Statuses</option>
             <option value="COMPLETED">Completed</option>
             <option value="PENDING">Pending</option>
             <option value="FLAGGED">Flagged</option>
             <option value="FAILED">Failed</option>
           </select>
-          <button onClick={load} className="rounded-lg border border-white/[0.08] bg-slate-800/50 p-1.5 text-slate-400 hover:text-white">
+          <button onClick={load} className="rounded-lg border border-white/8 bg-slate-800/50 p-1.5 text-slate-400 hover:text-white">
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </button>
         </div>
@@ -622,7 +622,7 @@ function TransactionHistoryTable({ refreshKey }: { refreshKey: number }) {
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-white/[0.06] text-xs text-slate-500">
+            <tr className="border-b border-white/6 text-xs text-slate-500">
               <th className="pb-3 pr-4">Ref</th>
               <th className="pb-3 pr-4">Type</th>
               <th className="pb-3 pr-4">Member</th>
@@ -639,7 +639,7 @@ function TransactionHistoryTable({ refreshKey }: { refreshKey: number }) {
               <tr><td colSpan={7} className="py-12 text-center text-slate-500">No transactions found</td></tr>
             ) : (
               transactions.map((tx) => (
-                <tr key={tx.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                <tr key={tx.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
                   <td className="py-3 pr-4 font-mono text-xs text-slate-300">{tx.txRef}</td>
                   <td className="py-3 pr-4">
                     <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase ${typeColors[tx.type]}`}>
@@ -676,9 +676,9 @@ function TransactionHistoryTable({ refreshKey }: { refreshKey: number }) {
           <span>Page {page} of {totalPages}</span>
           <div className="flex gap-2">
             <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
-              className="rounded-lg border border-white/[0.08] p-1.5 hover:bg-slate-800 disabled:opacity-30"><ChevronLeft className="h-4 w-4" /></button>
+              className="rounded-lg border border-white/8 p-1.5 hover:bg-slate-800 disabled:opacity-30"><ChevronLeft className="h-4 w-4" /></button>
             <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-              className="rounded-lg border border-white/[0.08] p-1.5 hover:bg-slate-800 disabled:opacity-30"><ChevronRight className="h-4 w-4" /></button>
+              className="rounded-lg border border-white/8 p-1.5 hover:bg-slate-800 disabled:opacity-30"><ChevronRight className="h-4 w-4" /></button>
           </div>
         </div>
       )}
@@ -709,7 +709,7 @@ function BalanceChecker() {
   };
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-slate-900/50 p-6">
+    <div className="rounded-2xl border border-white/6 bg-slate-900/50 p-6">
       <div className="mb-5 flex items-center gap-3">
         <span className="rounded-lg bg-cyan-500/10 p-2 text-cyan-400"><Wallet className="h-5 w-5" /></span>
         <div>
@@ -730,7 +730,7 @@ function BalanceChecker() {
       {info && (
         <div className="mt-6 space-y-4">
           {/* Balance card */}
-          <div className="rounded-xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-sky-500/5 p-6 text-center">
+          <div className="rounded-xl border border-cyan-500/20 bg-linear-to-br from-cyan-500/10 to-sky-500/5 p-6 text-center">
             <p className="text-xs text-slate-400 uppercase tracking-wider">Current Balance</p>
             <p className="mt-1 text-3xl font-bold text-white">KES {info.member.balance.toLocaleString()}</p>
             <p className="mt-1 text-sm text-slate-400">{info.member.fullName} ({info.member.memberId})</p>
@@ -738,11 +738,11 @@ function BalanceChecker() {
 
           {/* Summary */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-white/[0.06] bg-slate-800/30 p-4">
+            <div className="rounded-xl border border-white/6 bg-slate-800/30 p-4">
               <p className="text-xs text-slate-400">Total Deposits</p>
               <p className="mt-1 text-lg font-bold text-emerald-400">KES {info.summary.totalDeposits.toLocaleString()}</p>
             </div>
-            <div className="rounded-xl border border-white/[0.06] bg-slate-800/30 p-4">
+            <div className="rounded-xl border border-white/6 bg-slate-800/30 p-4">
               <p className="text-xs text-slate-400">Total Withdrawals</p>
               <p className="mt-1 text-lg font-bold text-amber-400">KES {info.summary.totalWithdrawals.toLocaleString()}</p>
             </div>
@@ -750,11 +750,11 @@ function BalanceChecker() {
 
           {/* Active loans */}
           {info.summary.activeLoans.length > 0 && (
-            <div className="rounded-xl border border-white/[0.06] bg-slate-800/30 p-4">
+            <div className="rounded-xl border border-white/6 bg-slate-800/30 p-4">
               <p className="text-xs font-medium text-slate-400 mb-3">Active Loans</p>
               <div className="space-y-2">
                 {info.summary.activeLoans.map((loan) => (
-                  <div key={loan.loanRef} className="flex items-center justify-between rounded-lg bg-white/[0.02] px-3 py-2">
+                  <div key={loan.loanRef} className="flex items-center justify-between rounded-lg bg-white/2 px-3 py-2">
                     <span className="font-mono text-xs text-slate-300">{loan.loanRef}</span>
                     <span className="text-sm font-medium text-amber-400">KES {loan.outstandingBalance.toLocaleString()}</span>
                   </div>

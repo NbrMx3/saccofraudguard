@@ -114,7 +114,7 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
               <div
                 key={n.id}
                 className={`flex items-start gap-3 px-4 py-3 border-b border-border transition-colors hover:bg-accent/50 ${
-                  !n.read ? "bg-sky-500/[0.03]" : ""
+                  !n.read ? "bg-sky-500/3" : ""
                 }`}
               >
                 <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${typeColors[n.type] || typeColors.info}`}>

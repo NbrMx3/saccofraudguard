@@ -58,7 +58,7 @@ export default function MemberStatsCards() {
         return (
           <div
             key={card.label}
-            className="rounded-2xl border border-white/[0.06] bg-slate-900/50 p-5 backdrop-blur-sm"
+            className="rounded-2xl border border-white/6 bg-slate-900/50 p-5 backdrop-blur-sm"
           >
             <div className="flex items-start justify-between">
               <div>

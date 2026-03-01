@@ -24,7 +24,7 @@ export default function StatCard({
   };
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-slate-900/50 p-5 backdrop-blur-sm">
+    <div className="rounded-2xl border border-white/6 bg-slate-900/50 p-5 backdrop-blur-sm">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-slate-400">{label}</p>

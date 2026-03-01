@@ -270,7 +270,7 @@ function RulesTab() {
                   <p className="text-sm font-medium text-foreground truncate">{rule.name}</p>
                   <p className="text-[11px] text-muted-foreground truncate">{rule.description}</p>
                 </div>
-                <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                <div className="flex items-center gap-2 ml-2 shrink-0">
                   <button onClick={(e) => { e.stopPropagation(); handleToggle(rule); }} className="text-muted-foreground hover:text-foreground">
                     {rule.enabled ? <ToggleRight className="h-5 w-5 text-emerald-400" /> : <ToggleLeft className="h-5 w-5" />}
                   </button>

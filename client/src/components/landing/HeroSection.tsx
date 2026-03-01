@@ -9,11 +9,11 @@ export default function HeroSection() {
     <section className="relative min-h-screen flex items-center overflow-hidden bg-[#020a18]">
       {/* Deep navy gradient base matching screenshot */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#010812] via-[#041428] to-[#020a18]" />
+        <div className="absolute inset-0 bg-linear-to-b from-[#010812] via-[#041428] to-[#020a18]" />
         {/* Radial cyan glow (matching screenshot center glow) */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[800px] bg-cyan-500/[0.04] rounded-full blur-[160px]" />
-        <div className="absolute top-1/2 right-1/3 w-[500px] h-[500px] bg-cyan-400/[0.03] rounded-full blur-[140px]" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/15 to-transparent" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-250 h-200 bg-cyan-500/4 rounded-full blur-[160px]" />
+        <div className="absolute top-1/2 right-1/3 w-125 h-125 bg-cyan-400/3 rounded-full blur-[140px]" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-cyan-400/15 to-transparent" />
         {/* Grid overlay */}
         <div
           className="absolute inset-0 opacity-[0.025]"
@@ -32,7 +32,7 @@ export default function HeroSection() {
 
       {/* Scan line effect */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/25 to-transparent cyber-scanline" />
+        <div className="absolute left-0 right-0 h-px bg-linear-to-r from-transparent via-cyan-400/25 to-transparent cyber-scanline" />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-32 pb-20 md:pt-40 md:pb-28 z-10">
@@ -51,7 +51,7 @@ export default function HeroSection() {
             <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl xl:text-7xl leading-[1.1]">
               Intelligent Fraud Detection for{' '}
               <span className="relative">
-                <span className="bg-gradient-to-r from-cyan-400 via-teal-300 to-cyan-500 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-cyan-400 via-teal-300 to-cyan-500 bg-clip-text text-transparent">
                   SACCOs & Chamas
                 </span>
               </span>
@@ -67,7 +67,7 @@ export default function HeroSection() {
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <Link
                 to="/signup"
-                className="group inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-600 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-cyan-500/20 transition-all hover:shadow-cyan-500/40 hover:from-cyan-400 hover:to-teal-500 active:scale-[0.98]"
+                className="group inline-flex items-center justify-center gap-2.5 rounded-2xl bg-linear-to-r from-cyan-500 to-teal-600 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-cyan-500/20 transition-all hover:shadow-cyan-500/40 hover:from-cyan-400 hover:to-teal-500 active:scale-[0.98]"
               >
                 Get Started
                 <ArrowRight className="h-4.5 w-4.5 transition-transform group-hover:translate-x-0.5" />
@@ -106,7 +106,7 @@ export default function HeroSection() {
 
         {/* Live stats bar */}
         <div className="mt-16 lg:mt-24">
-          <div className="rounded-2xl border border-cyan-400/10 bg-white/[0.02] backdrop-blur-sm p-1">
+          <div className="rounded-2xl border border-cyan-400/10 bg-white/2 backdrop-blur-sm p-1">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1">
               {[
                 { label: 'Transactions Monitored', value: '12,847', change: '+12%' },
@@ -114,7 +114,7 @@ export default function HeroSection() {
                 { label: 'System Accuracy', value: '94.2%', change: '+2.1%' },
                 { label: 'Active Monitoring', value: '24/7', change: 'Always On' },
               ].map((stat) => (
-                <div key={stat.label} className="rounded-xl p-4 sm:p-5 hover:bg-white/[0.03] transition-colors">
+                <div key={stat.label} className="rounded-xl p-4 sm:p-5 hover:bg-white/3 transition-colors">
                   <p className="text-xs text-slate-500 mb-1">{stat.label}</p>
                   <p className="text-xl sm:text-2xl font-bold text-white">{stat.value}</p>
                   <p className="text-xs font-medium mt-1 text-cyan-400">{stat.change}</p>

@@ -198,7 +198,7 @@ function DashboardOverview({ onNavigate }: { onNavigate: (v: AdminView) => void 
                   className="flex items-start gap-3 rounded-xl border border-border bg-background p-3"
                 >
                   <div
-                    className={`mt-0.5 h-2 w-2 rounded-full flex-shrink-0 ${
+                    className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${
                       alert.severity === "CRITICAL" || alert.severity === "HIGH"
                         ? "bg-red-400"
                         : alert.severity === "MEDIUM"

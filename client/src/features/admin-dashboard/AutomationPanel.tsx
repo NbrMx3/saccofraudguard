@@ -364,7 +364,7 @@ export default function AutomationPanel() {
                     {job.lastResult && (
                       <div className="mt-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 px-3 py-2">
                         <p className="text-[11px] text-emerald-400 flex items-center gap-1.5">
-                          <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
+                          <CheckCircle2 className="h-3 w-3 shrink-0" />
                           {job.lastResult}
                         </p>
                       </div>
@@ -372,7 +372,7 @@ export default function AutomationPanel() {
                     {job.lastError && (
                       <div className="mt-2 rounded-lg bg-red-500/5 border border-red-500/10 px-3 py-2">
                         <p className="text-[11px] text-red-400 flex items-center gap-1.5">
-                          <XCircle className="h-3 w-3 flex-shrink-0" />
+                          <XCircle className="h-3 w-3 shrink-0" />
                           {job.lastError}
                         </p>
                       </div>
@@ -444,7 +444,7 @@ export default function AutomationPanel() {
             logs.map((log) => (
               <div key={log.id} className="px-5 py-3 flex items-start gap-3">
                 <div
-                  className={`mt-0.5 h-2 w-2 rounded-full flex-shrink-0 ${
+                  className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${
                     log.action.startsWith("AUTO_")
                       ? "bg-sky-400"
                       : log.action === "MANUAL_TRIGGER_JOB"
@@ -471,7 +471,7 @@ export default function AutomationPanel() {
                     <p className="text-[11px] text-muted-foreground truncate">{log.details}</p>
                   )}
                 </div>
-                <span className="text-[10px] text-muted-foreground whitespace-nowrap flex-shrink-0">
+                <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
                   {formatDate(log.createdAt)}
                 </span>
               </div>

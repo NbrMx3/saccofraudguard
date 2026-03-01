@@ -73,7 +73,7 @@ export default function Navbar() {
             </Link>
             <Link
               to="/signup"
-              className="rounded-xl bg-gradient-to-r from-cyan-500 to-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:from-cyan-400 hover:to-teal-500 hover:shadow-cyan-500/40 active:scale-[0.98]"
+              className="rounded-xl bg-linear-to-r from-cyan-500 to-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:from-cyan-400 hover:to-teal-500 hover:shadow-cyan-500/40 active:scale-[0.98]"
             >
               Get Started
             </Link>
@@ -125,7 +125,7 @@ export default function Navbar() {
             </Link>
             <Link
               to="/signup"
-              className="rounded-xl bg-gradient-to-r from-cyan-500 to-teal-600 px-4 py-2.5 text-center text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-400 hover:to-teal-500 transition-colors"
+              className="rounded-xl bg-linear-to-r from-cyan-500 to-teal-600 px-4 py-2.5 text-center text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-400 hover:to-teal-500 transition-colors"
             >
               Get Started
             </Link>

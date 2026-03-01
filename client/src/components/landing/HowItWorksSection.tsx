@@ -27,7 +27,7 @@ const steps = [
 export default function HowItWorksSection() {
   return (
     <section id="how-it-works" className="relative bg-[#020a18]/50 py-24 sm:py-32">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#020a18] via-transparent to-[#020a18]" />
+      <div className="absolute inset-0 bg-linear-to-b from-[#020a18] via-transparent to-[#020a18]" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -37,7 +37,7 @@ export default function HowItWorksSection() {
           </p>
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
             Three steps to{' '}
-            <span className="bg-gradient-to-r from-cyan-400 via-cyan-300 to-cyan-500 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-cyan-400 via-cyan-300 to-cyan-500 bg-clip-text text-transparent">
               secure operations
             </span>
           </h2>
@@ -57,7 +57,7 @@ export default function HowItWorksSection() {
                   <ArrowRight className="h-5 w-5 text-cyan-500/30" />
                 </div>
               )}
-              <div className="group rounded-2xl border border-white/[0.06] bg-[#020a18]/60 p-8 backdrop-blur-sm transition-all duration-300 hover:border-cyan-400/20 hover:bg-[#020a18]/80 h-full">
+              <div className="group rounded-2xl border border-white/6 bg-[#020a18]/60 p-8 backdrop-blur-sm transition-all duration-300 hover:border-cyan-400/20 hover:bg-[#020a18]/80 h-full">
                 {/* Step number */}
                 <div className="flex items-center gap-4 mb-6">
                   <span className="text-4xl font-black text-cyan-500/20 group-hover:text-cyan-500/30 transition-colors">
