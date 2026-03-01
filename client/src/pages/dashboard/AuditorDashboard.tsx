@@ -61,13 +61,25 @@ export default function AuditorDashboard() {
   const navItems: NavItem[] = useMemo(() => [
     { label: "Dashboard", icon: LayoutDashboard, active: currentView === "dashboard", onClick: () => setCurrentView("dashboard") },
     { label: "Transactions", icon: ArrowRightLeft, active: currentView === "transaction-monitoring", onClick: () => setCurrentView("transaction-monitoring") },
-    { label: "Audit Reviews", icon: FileSearch, active: currentView === "audit-reviews", onClick: () => setCurrentView("audit-reviews") },
-    { label: "Compliance", icon: Scale, active: currentView === "compliance", onClick: () => setCurrentView("compliance") },
     { label: "Fraud Reports", icon: AlertTriangle, active: currentView === "fraud-reports", onClick: () => setCurrentView("fraud-reports") },
     { label: "Investigations", icon: ClipboardCheck, active: currentView === "investigations", onClick: () => setCurrentView("investigations") },
-    { label: "Audit Trail", icon: History, active: currentView === "audit-trail", onClick: () => setCurrentView("audit-trail") },
-    { label: "Compliance Reports", icon: FileText, active: currentView === "compliance-reports", onClick: () => setCurrentView("compliance-reports") },
-    { label: "Export Data", icon: Download, active: currentView === "export-data", onClick: () => setCurrentView("export-data") },
+    {
+      label: "Audit Trail",
+      icon: History,
+      children: [
+        { label: "Audit Trail", icon: History, active: currentView === "audit-trail", onClick: () => setCurrentView("audit-trail") },
+        { label: "Audit Reviews", icon: FileSearch, active: currentView === "audit-reviews", onClick: () => setCurrentView("audit-reviews") },
+      ],
+    },
+    {
+      label: "Compliances",
+      icon: Scale,
+      children: [
+        { label: "Compliance", icon: Scale, active: currentView === "compliance", onClick: () => setCurrentView("compliance") },
+        { label: "Compliance Reports", icon: FileText, active: currentView === "compliance-reports", onClick: () => setCurrentView("compliance-reports") },
+        { label: "Export Data", icon: Download, active: currentView === "export-data", onClick: () => setCurrentView("export-data") },
+      ],
+    },
     {
       label: "Rule Engine",
       icon: Shield,
