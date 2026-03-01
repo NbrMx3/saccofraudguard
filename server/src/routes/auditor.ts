@@ -410,7 +410,7 @@ router.get("/export/:entity", async (req: AuthRequest, res: Response) => {
         data = logs.map((l) => [
           l.action, l.entity, l.entityId || "",
           (l.details || "").replace(/,/g, ";"),
-          `${l.user.firstName} ${l.user.lastName}`, l.user.role,
+          l.user ? `${l.user.firstName} ${l.user.lastName}` : "SYSTEM", l.user?.role || "SYSTEM",
           l.ipAddress || "", l.createdAt.toISOString(),
         ]);
         break;

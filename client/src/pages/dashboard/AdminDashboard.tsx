@@ -13,6 +13,7 @@ import {
   Database,
   Activity,
   Loader2,
+  Bot,
 } from "lucide-react";
 import { fetchAdminStats, fetchFraudAlerts } from "@/services/adminService";
 import UserManagement from "@/features/admin-dashboard/UserManagement";
@@ -23,8 +24,9 @@ import RiskPolicies from "@/features/admin-dashboard/RiskPolicies";
 import SystemConfig from "@/features/admin-dashboard/SystemConfig";
 import RoleManagement from "@/features/admin-dashboard/RoleManagement";
 import DataExports from "@/features/admin-dashboard/DataExports";
+import AutomationPanel from "@/features/admin-dashboard/AutomationPanel";
 
-type AdminView = "dashboard" | "users" | "fraud" | "audit" | "analytics" | "risk" | "config" | "roles" | "exports";
+type AdminView = "dashboard" | "users" | "fraud" | "audit" | "analytics" | "risk" | "config" | "roles" | "exports" | "automation";
 
 const viewTitles: Record<AdminView, string> = {
   dashboard: "Dashboard Overview",
@@ -36,6 +38,7 @@ const viewTitles: Record<AdminView, string> = {
   config: "System Configuration",
   roles: "Role Management",
   exports: "Data Exports",
+  automation: "Automation Engine",
 };
 
 export default function AdminDashboard() {
@@ -51,6 +54,7 @@ export default function AdminDashboard() {
     { label: "System Config", icon: Settings, active: activeView === "config", onClick: () => setActiveView("config") },
     { label: "Role Management", icon: UserCog, active: activeView === "roles", onClick: () => setActiveView("roles") },
     { label: "Data Exports", icon: Database, active: activeView === "exports", onClick: () => setActiveView("exports") },
+    { label: "Automation", icon: Bot, active: activeView === "automation", onClick: () => setActiveView("automation") },
   ];
 
   return (
@@ -72,6 +76,7 @@ export default function AdminDashboard() {
       {activeView === "config" && <SystemConfig />}
       {activeView === "roles" && <RoleManagement />}
       {activeView === "exports" && <DataExports />}
+      {activeView === "automation" && <AutomationPanel />}
     </DashboardLayout>
   );
 }

@@ -5,6 +5,12 @@ import {
   authorize,
   type AuthRequest,
 } from "../middleware/auth.js";
+import {
+  getAllJobStates,
+  getJobState,
+  serverStartedAt,
+} from "../automation/automationState.js";
+import { toggleJob, triggerJob, getJobNames } from "../automation/scheduler.js";
 
 const router: express.Router = express.Router();
 
@@ -729,5 +735,173 @@ router.get(
     }
   }
 );
+
+// ═══════════════════════════════════════════════════════════════════
+//  AUTOMATION MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════
+
+// GET /automation/status — get all job states + server uptime
+router.get(
+  "/automation/status",
+  async (_req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const jobs = getAllJobStates();
+      const uptimeMs = Date.now() - serverStartedAt.getTime();
+      res.json({
+        serverStartedAt: serverStartedAt.toISOString(),
+        uptimeMs,
+        uptimeFormatted: formatUptime(uptimeMs),
+        jobs,
+      });
+    } catch (error) {
+      console.error("Automation status error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// POST /automation/jobs/:name/trigger — manually trigger a job
+router.post(
+  "/automation/jobs/:name/trigger",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const jobName = req.params.name as string;
+      const validJobs = getJobNames();
+      if (!validJobs.includes(jobName)) {
+        res.status(404).json({ error: `Unknown job: ${jobName}` });
+        return;
+      }
+
+      const result = await triggerJob(jobName);
+
+      // Audit log
+      await prisma.auditLog.create({
+        data: {
+          action: "MANUAL_TRIGGER_JOB",
+          entity: "AutomationJob",
+          entityId: jobName,
+          details: `Manually triggered by admin — Result: ${result}`,
+          userId: req.user!.userId,
+          ipAddress: req.ip,
+        },
+      });
+
+      const state = getJobState(jobName);
+      res.json({ message: `Job ${jobName} triggered successfully`, result, state });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to trigger job" });
+    }
+  }
+);
+
+// PATCH /automation/jobs/:name/toggle — enable or disable a job
+router.patch(
+  "/automation/jobs/:name/toggle",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const jobName = req.params.name as string;
+      const { enabled } = req.body;
+      const validJobs = getJobNames();
+
+      if (!validJobs.includes(jobName)) {
+        res.status(404).json({ error: `Unknown job: ${jobName}` });
+        return;
+      }
+
+      if (typeof enabled !== "boolean") {
+        res.status(400).json({ error: "enabled (boolean) is required" });
+        return;
+      }
+
+      toggleJob(jobName, enabled);
+
+      await prisma.auditLog.create({
+        data: {
+          action: enabled ? "ENABLE_JOB" : "DISABLE_JOB",
+          entity: "AutomationJob",
+          entityId: jobName,
+          details: `Job ${enabled ? "enabled" : "disabled"} by admin`,
+          userId: req.user!.userId,
+          ipAddress: req.ip,
+        },
+      });
+
+      const state = getJobState(jobName);
+      res.json({ message: `Job ${jobName} ${enabled ? "enabled" : "disabled"}`, state });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || "Failed to toggle job" });
+    }
+  }
+);
+
+// GET /automation/logs — recent automation audit logs
+router.get(
+  "/automation/logs",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const page = Math.max(1, Number(req.query.page) || 1);
+      const limit = 20;
+      const skip = (page - 1) * limit;
+
+      const [logs, total] = await Promise.all([
+        prisma.auditLog.findMany({
+          where: {
+            action: {
+              in: [
+                "AUTO_FRAUD_RULE_SCAN",
+                "AUTO_RISK_SCORE_CALC",
+                "AUTO_DECISION_EVAL",
+                "AUTO_ALERT_DIGEST",
+                "AUTO_LOAN_MONITORING",
+                "MANUAL_TRIGGER_JOB",
+                "ENABLE_JOB",
+                "DISABLE_JOB",
+              ],
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: limit,
+        }),
+        prisma.auditLog.count({
+          where: {
+            action: {
+              in: [
+                "AUTO_FRAUD_RULE_SCAN",
+                "AUTO_RISK_SCORE_CALC",
+                "AUTO_DECISION_EVAL",
+                "AUTO_ALERT_DIGEST",
+                "AUTO_LOAN_MONITORING",
+                "MANUAL_TRIGGER_JOB",
+                "ENABLE_JOB",
+                "DISABLE_JOB",
+              ],
+            },
+          },
+        }),
+      ]);
+
+      res.json({
+        logs,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      });
+    } catch (error) {
+      console.error("Automation logs error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+function formatUptime(ms: number): string {
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const parts: string[] = [];
+  if (d > 0) parts.push(`${d}d`);
+  if (h > 0) parts.push(`${h}h`);
+  parts.push(`${m}m`);
+  return parts.join(" ");
+}
 
 export default router;

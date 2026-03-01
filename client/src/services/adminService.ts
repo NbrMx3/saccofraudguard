@@ -118,3 +118,24 @@ export async function exportData(entity: string, format: "json" | "csv" = "json"
   const { data } = await api.get(`/api/admin/export/${entity}`, { params: { format } });
   return data;
 }
+
+// ─── Automation ─────────────────────────────────────────────────────
+export async function fetchAutomationStatus() {
+  const { data } = await api.get("/api/admin/automation/status");
+  return data;
+}
+
+export async function triggerAutomationJob(jobName: string) {
+  const { data } = await api.post(`/api/admin/automation/jobs/${jobName}/trigger`);
+  return data;
+}
+
+export async function toggleAutomationJob(jobName: string, enabled: boolean) {
+  const { data } = await api.patch(`/api/admin/automation/jobs/${jobName}/toggle`, { enabled });
+  return data;
+}
+
+export async function fetchAutomationLogs(page = 1) {
+  const { data } = await api.get("/api/admin/automation/logs", { params: { page } });
+  return data;
+}

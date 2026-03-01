@@ -188,8 +188,8 @@ model AuditLog {
   entityId    String?  @map("entity_id")
   details     String?
   ipAddress   String?  @map("ip_address")
-  userId      String   @map("user_id")
-  user        User     @relation("AuditLogUser", fields: [userId], references: [id])
+  userId      String?  @map("user_id")
+  user        User?    @relation("AuditLogUser", fields: [userId], references: [id])
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("audit_logs")

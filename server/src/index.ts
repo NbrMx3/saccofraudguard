@@ -10,6 +10,7 @@ import officerRouter from "./routes/officer.js";
 import auditorRouter from "./routes/auditor.js";
 import fraudEngineRouter from "./routes/fraudEngine.js";
 import notificationsRouter from "./routes/notifications.js";
+import { startAutomation } from "./automation/scheduler.js";
 
 dotenv.config();
 
@@ -88,6 +89,9 @@ process.on("uncaughtException", (err) => {
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
+
+  // Start automated jobs (fraud scanning, risk scoring, etc.)
+  startAutomation();
 });
 
 export default app;
