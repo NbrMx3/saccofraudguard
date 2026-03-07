@@ -86,8 +86,8 @@ export default function AuditLogs() {
                       {new Date(log.createdAt).toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-foreground whitespace-nowrap">
-                      {log.user.firstName} {log.user.lastName}
-                      <span className="ml-1 text-xs text-muted-foreground">({log.user.role})</span>
+                      {log.user?.firstName ?? "Unknown"} {log.user?.lastName ?? ""}
+                      <span className="ml-1 text-xs text-muted-foreground">({log.user?.role ?? "N/A"})</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-xs font-medium font-mono ${actionColors[log.action] || "text-foreground"}`}>
