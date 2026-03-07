@@ -4,6 +4,7 @@ import FeaturesSection from '@/components/landing/FeaturesSection'
 import HowItWorksSection from '@/components/landing/HowItWorksSection'
 import DashboardPreviewSection from '@/components/landing/DashboardPreviewSection'
 import WhyChooseUsSection from '@/components/landing/WhyChooseUsSection'
+import ValuePropositionSection from '@/components/landing/ValuePropositionSection'
 import CTASection from '@/components/landing/CTASection'
 import Footer from '@/components/landing/Footer'
 
@@ -17,6 +18,7 @@ export default function LandingPage() {
         <HowItWorksSection />
         <DashboardPreviewSection />
         <WhyChooseUsSection />
+        <ValuePropositionSection />
         <CTASection />
       </main>
       <Footer />
