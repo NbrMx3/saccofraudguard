@@ -1,7 +1,7 @@
 import { Router, type Request, type Response, type Router as RouterType } from "express";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import prisma from "../lib/prisma.js";
+import prisma, { withRetry } from "../lib/prisma.js";
 import { signToken } from "../lib/jwt.js";
 import { sendPasswordResetEmail } from "../lib/email.js";
 import { authenticate, type AuthRequest } from "../middleware/auth.js";
@@ -51,12 +51,12 @@ router.post("/signup", async (req: Request, res: Response): Promise<void> => {
     }
 
     // Check if user with this nationalId AND email exists in the same row
-    const existingUser = await prisma.user.findFirst({
+    const existingUser = await withRetry(() => prisma.user.findFirst({
       where: {
         nationalId: nationalId,
         email: email,
       },
-    });
+    }));
 
     if (!existingUser) {
       res.status(404).json({
@@ -81,10 +81,10 @@ router.post("/signup", async (req: Request, res: Response): Promise<void> => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Update user with password
-    await prisma.user.update({
+    await withRetry(() => prisma.user.update({
       where: { id: existingUser.id },
       data: { password: hashedPassword },
-    });
+    }));
 
     res.status(201).json({
       message:
@@ -106,9 +106,9 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await withRetry(() => prisma.user.findUnique({
       where: { nationalId },
-    });
+    }));
 
     if (!user || user.password === "PENDING_REGISTRATION") {
       res.status(401).json({ error: "Invalid credentials" });
@@ -127,10 +127,10 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
     }
 
     // Update last login
-    await prisma.user.update({
+    await withRetry(() => prisma.user.update({
       where: { id: user.id },
       data: { lastLogin: new Date() },
-    });
+    }));
 
     // Create JWT
     const token = signToken({
@@ -174,9 +174,9 @@ router.post(
         return;
       }
 
-      const user = await prisma.user.findFirst({
+      const user = await withRetry(() => prisma.user.findFirst({
         where: { nationalId, email },
-      });
+      }));
 
       if (!user) {
         // Don't reveal if user exists
@@ -191,10 +191,10 @@ router.post(
       const resetToken = crypto.randomBytes(32).toString("hex");
       const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-      await prisma.user.update({
+      await withRetry(() => prisma.user.update({
         where: { id: user.id },
         data: { resetToken, resetExpires },
-      });
+      }));
 
       // Send reset email
       const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
@@ -242,12 +242,12 @@ router.post(
         return;
       }
 
-      const user = await prisma.user.findFirst({
+      const user = await withRetry(() => prisma.user.findFirst({
         where: {
           resetToken: token,
           resetExpires: { gt: new Date() },
         },
-      });
+      }));
 
       if (!user) {
         res
@@ -258,14 +258,14 @@ router.post(
 
       const hashedPassword = await bcrypt.hash(password, 12);
 
-      await prisma.user.update({
+      await withRetry(() => prisma.user.update({
         where: { id: user.id },
         data: {
           password: hashedPassword,
           resetToken: null,
           resetExpires: null,
         },
-      });
+      }));
 
       res.json({ message: "Password reset successfully. Please login." });
     } catch (error) {
@@ -281,7 +281,7 @@ router.get(
   authenticate,
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const user = await prisma.user.findUnique({
+      const user = await withRetry(() => prisma.user.findUnique({
         where: { id: req.user!.userId },
         select: {
           id: true,
@@ -293,7 +293,7 @@ router.get(
           isActive: true,
           lastLogin: true,
         },
-      });
+      }));
 
       if (!user) {
         res.status(404).json({ error: "User not found" });
