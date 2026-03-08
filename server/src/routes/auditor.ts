@@ -737,4 +737,199 @@ router.get("/transactions/:id", async (req: AuthRequest, res: Response) => {
   }
 });
 
+// ─── INVESTIGATION CRUD ────────────────────────────────────────────────
+
+// POST /investigations — create a new investigation case
+router.post("/investigations", async (req: AuthRequest, res: Response) => {
+  try {
+    const { title, description, priority, alertId } = req.body;
+    if (!title || !description) {
+      res.status(400).json({ error: "Title and description are required" });
+      return;
+    }
+    const count = await prisma.caseInvestigation.count();
+    const caseRef = `CASE-${String(count + 1).padStart(4, "0")}`;
+
+    const investigation = await prisma.caseInvestigation.create({
+      data: {
+        caseRef,
+        title,
+        description,
+        priority: priority || "MEDIUM",
+        assignedToId: req.user!.userId,
+        ...(alertId ? { alertId } : {}),
+      },
+      include: {
+        assignedTo: { select: { firstName: true, lastName: true, role: true } },
+        alert: { select: { id: true, type: true, severity: true, description: true, member: { select: { memberId: true, fullName: true } } } },
+      },
+    });
+
+    await logAction(req.user!.userId, "CREATE_INVESTIGATION", "CaseInvestigation", investigation.id, `Created case ${caseRef}`, req.ip);
+    res.status(201).json(investigation);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// PATCH /investigations/:id — update case (status, findings, resolution, notes)
+router.patch("/investigations/:id", async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const { status, findings, resolution, priority } = req.body;
+    const data: any = {};
+    if (status) data.status = status;
+    if (findings !== undefined) data.findings = findings;
+    if (resolution !== undefined) data.resolution = resolution;
+    if (priority) data.priority = priority;
+
+    const investigation = await prisma.caseInvestigation.update({
+      where: { id },
+      data,
+      include: {
+        assignedTo: { select: { firstName: true, lastName: true, role: true } },
+      },
+    });
+
+    await logAction(req.user!.userId, "UPDATE_INVESTIGATION", "CaseInvestigation", id, `Updated: ${JSON.stringify(data)}`, req.ip);
+    res.json(investigation);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── FRAUD ANALYTICS ────────────────────────────────────────────────────
+
+// GET /analytics — comprehensive fraud analytics data
+router.get("/analytics", async (_req: AuthRequest, res: Response) => {
+  try {
+    const now = new Date();
+    const sixMonthsAgo = new Date(now.getTime() - 180 * 86400000);
+
+    // Fraud trends: alerts grouped by month
+    const allAlerts = await prisma.fraudAlert.findMany({
+      where: { createdAt: { gte: sixMonthsAgo } },
+      select: { createdAt: true, severity: true, type: true, resolved: true },
+    });
+
+    const monthlyTrends: Record<string, { total: number; resolved: number; critical: number; high: number; medium: number; low: number }> = {};
+    for (const alert of allAlerts) {
+      const month = alert.createdAt.toISOString().slice(0, 7);
+      if (!monthlyTrends[month]) monthlyTrends[month] = { total: 0, resolved: 0, critical: 0, high: 0, medium: 0, low: 0 };
+      monthlyTrends[month].total++;
+      if (alert.resolved) monthlyTrends[month].resolved++;
+      const sev = alert.severity.toLowerCase() as "critical" | "high" | "medium" | "low";
+      if (monthlyTrends[month][sev] !== undefined) monthlyTrends[month][sev]++;
+    }
+
+    // Fraud by transaction type
+    const alertsByType = await prisma.fraudAlert.groupBy({
+      by: ["type"],
+      _count: { id: true },
+    });
+
+    // High-risk members (from MemberRiskScore)
+    const highRiskMembers = await prisma.memberRiskScore.findMany({
+      where: { riskLevel: { in: ["HIGH", "CRITICAL"] } },
+      include: { member: { select: { memberId: true, fullName: true, status: true, balance: true } } },
+      orderBy: { totalPoints: "desc" },
+      take: 20,
+    });
+
+    // Risk score distribution
+    const allScores = await prisma.memberRiskScore.findMany({
+      select: { totalPoints: true, riskLevel: true },
+    });
+    const riskDistribution = { LOW: 0, MEDIUM: 0, HIGH: 0, CRITICAL: 0 };
+    for (const s of allScores) {
+      if (riskDistribution[s.riskLevel as keyof typeof riskDistribution] !== undefined) {
+        riskDistribution[s.riskLevel as keyof typeof riskDistribution]++;
+      }
+    }
+
+    // Detection rate
+    const totalAlerts = await prisma.fraudAlert.count();
+    const resolvedAlerts = await prisma.fraudAlert.count({ where: { resolved: true } });
+    const confirmedFraud = await prisma.caseInvestigation.count({ where: { status: "CLOSED", findings: { not: null } } });
+
+    // Suspicious transaction patterns
+    const flaggedTxByType = await prisma.transaction.groupBy({
+      by: ["type"],
+      where: { status: "FLAGGED" },
+      _count: { id: true },
+      _sum: { amount: true },
+    });
+
+    res.json({
+      monthlyTrends: Object.entries(monthlyTrends)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([month, data]) => ({ month, ...data })),
+      fraudByType: alertsByType.map((a) => ({ type: a.type, count: a._count.id })),
+      highRiskMembers: highRiskMembers.map((r) => ({
+        memberId: r.member.memberId,
+        fullName: r.member.fullName,
+        status: r.member.status,
+        balance: r.member.balance,
+        riskLevel: r.riskLevel,
+        totalScore: r.totalPoints,
+      })),
+      riskDistribution,
+      detectionStats: {
+        totalAlerts,
+        resolvedAlerts,
+        resolutionRate: totalAlerts > 0 ? Math.round((resolvedAlerts / totalAlerts) * 100) : 0,
+        confirmedFraud,
+        unresolvedAlerts: totalAlerts - resolvedAlerts,
+      },
+      suspiciousPatterns: flaggedTxByType.map((t) => ({
+        type: t.type,
+        count: t._count.id,
+        totalAmount: t._sum.amount ?? 0,
+      })),
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /member-activity/:memberId — member activity history for investigations
+router.get("/member-activity/:memberId", async (req: AuthRequest, res: Response) => {
+  try {
+    const memberId = req.params.memberId as string;
+
+    const member = await prisma.member.findUnique({
+      where: { id: memberId },
+      select: { id: true, memberId: true, fullName: true, email: true, phoneNumber: true, status: true, balance: true, createdAt: true },
+    });
+
+    if (!member) {
+      res.status(404).json({ error: "Member not found" });
+      return;
+    }
+
+    const [recentTransactions, fraudAlerts, riskScore] = await Promise.all([
+      prisma.transaction.findMany({
+        where: { memberId },
+        select: { id: true, txRef: true, type: true, amount: true, status: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
+      prisma.fraudAlert.findMany({
+        where: { memberId },
+        select: { id: true, type: true, severity: true, description: true, resolved: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      }),
+      prisma.memberRiskScore.findFirst({
+        where: { memberId },
+        select: { totalPoints: true, riskLevel: true, frequencyPoints: true, amountPoints: true, behaviorPoints: true, updatedAt: true },
+      }),
+    ]);
+
+    res.json({ member, recentTransactions, fraudAlerts, riskScore });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 export default router;

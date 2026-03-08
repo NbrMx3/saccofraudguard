@@ -9,6 +9,7 @@ import AuditTrailPage from "@/features/auditor-dashboard/AuditTrailPage";
 import ComplianceReportsPage from "@/features/auditor-dashboard/ComplianceReportsPage";
 import ExportDataPage from "@/features/auditor-dashboard/ExportDataPage";
 import TransactionMonitoringPage from "@/features/auditor-dashboard/TransactionMonitoringPage";
+import FraudAnalyticsPage from "@/features/auditor-dashboard/FraudAnalyticsPage";
 import { fetchAuditorStats, type AuditorDashboardStats } from "@/services/auditorService";
 import {
   LayoutDashboard,
@@ -22,9 +23,10 @@ import {
   ShieldAlert,
   Loader2,
   ArrowRightLeft,
+  BarChart3,
 } from "lucide-react";
 
-type AuditorView = "dashboard" | "audit-reviews" | "compliance" | "fraud-reports" | "investigations" | "audit-trail" | "compliance-reports" | "export-data" | "transaction-monitoring";
+type AuditorView = "dashboard" | "audit-reviews" | "compliance" | "fraud-reports" | "investigations" | "audit-trail" | "compliance-reports" | "export-data" | "transaction-monitoring" | "fraud-analytics";
 
 export default function AuditorDashboard() {
   const [currentView, setCurrentView] = useState<AuditorView>("dashboard");
@@ -49,6 +51,7 @@ export default function AuditorDashboard() {
     { label: "Transactions", icon: ArrowRightLeft, active: currentView === "transaction-monitoring", onClick: () => setCurrentView("transaction-monitoring") },
     { label: "Fraud Reports", icon: AlertTriangle, active: currentView === "fraud-reports", onClick: () => setCurrentView("fraud-reports") },
     { label: "Investigations", icon: ClipboardCheck, active: currentView === "investigations", onClick: () => setCurrentView("investigations") },
+    { label: "Fraud Analytics", icon: BarChart3, active: currentView === "fraud-analytics", onClick: () => setCurrentView("fraud-analytics") },
     {
       label: "Audit Trail",
       icon: History,
@@ -82,6 +85,7 @@ export default function AuditorDashboard() {
       {currentView === "audit-trail" && <AuditTrailPage />}
       {currentView === "compliance-reports" && <ComplianceReportsPage />}
       {currentView === "export-data" && <ExportDataPage />}
+      {currentView === "fraud-analytics" && <FraudAnalyticsPage />}
 
       {currentView === "dashboard" && (
         <>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { fetchComplianceStats, type ComplianceStats } from "@/services/auditorService";
-import { Scale, Users, AlertTriangle, ShieldCheck, Activity, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Scale, Users, AlertTriangle, ShieldCheck, Activity, Loader2, CheckCircle, XCircle, Ban } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CompliancePage() {
@@ -67,6 +67,20 @@ export default function CompliancePage() {
       pass: stats.recentLogins > 0,
       detail: `${stats.recentLogins} users active recently`,
     },
+    {
+      label: "Suspicious Loan Approvals",
+      description: "Track loans approved for flagged or suspended members",
+      value: stats.flaggedMembers === 0 && stats.suspendedMembers === 0 ? 100 : Math.max(0, 100 - ((stats.flaggedMembers + stats.suspendedMembers) * 10)),
+      pass: stats.flaggedMembers === 0 && stats.suspendedMembers === 0,
+      detail: `${stats.flaggedMembers} flagged + ${stats.suspendedMembers} suspended members that may have unauthorized loans`,
+    },
+    {
+      label: "Unauthorized Transaction Detection",
+      description: "Flagged transactions requiring review",
+      value: stats.flaggedTransactions === 0 ? 100 : Math.max(0, 100 - (stats.flaggedTransactions * 5)),
+      pass: stats.flaggedTransactions === 0,
+      detail: `${stats.flaggedTransactions} unauthorized/flagged transactions detected`,
+    },
   ];
 
   return (
@@ -97,12 +111,13 @@ export default function CompliancePage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         {[
           { label: "Total Members", value: stats.totalMembers, icon: Users, color: "text-blue-400 bg-blue-500/10" },
           { label: "Flagged Members", value: stats.flaggedMembers, icon: AlertTriangle, color: "text-amber-400 bg-amber-500/10" },
           { label: "Unresolved Alerts", value: stats.unresolvedAlerts, icon: ShieldCheck, color: "text-red-400 bg-red-500/10" },
           { label: "Active Policies", value: `${stats.enabledPolicies}/${stats.policies}`, icon: Activity, color: "text-emerald-400 bg-emerald-500/10" },
+          { label: "Suspended Members", value: stats.suspendedMembers, icon: Ban, color: "text-orange-400 bg-orange-500/10" },
         ].map((card) => (
           <div key={card.label} className="rounded-2xl border border-border bg-card p-4">
             <div className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${card.color} mb-3`}>

@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { exportData } from "@/services/auditorService";
 
 // ── Types ────────────────────────────────────────────────────────
 type TransactionType = "DEPOSIT" | "WITHDRAWAL" | "LOAN_DISBURSEMENT" | "LOAN_REPAYMENT";
@@ -238,12 +239,27 @@ export default function TransactionMonitoringPage() {
           <h2 className="text-lg font-semibold text-white">Transaction Monitoring</h2>
           <p className="text-sm text-slate-400">Monitor and track all member transaction activities</p>
         </div>
-        <button
-          onClick={refresh}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-medium hover:bg-slate-700 transition-colors border border-slate-700"
-        >
-          <RefreshCw className="h-3.5 w-3.5" /> Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              try {
+                await exportData("transactions");
+                toast.success("Transaction report downloaded");
+              } catch {
+                toast.error("Failed to download report");
+              }
+            }}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-medium hover:bg-slate-700 transition-colors border border-slate-700"
+          >
+            <ArrowDownToLine className="h-3.5 w-3.5" /> Download Report
+          </button>
+          <button
+            onClick={refresh}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-medium hover:bg-slate-700 transition-colors border border-slate-700"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Refresh
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}

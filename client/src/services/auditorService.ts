@@ -183,3 +183,35 @@ export async function exportData(entity: string): Promise<void> {
   window.URL.revokeObjectURL(url);
   document.body.removeChild(a);
 }
+
+// Investigations CRUD
+export async function createInvestigation(body: { title: string; description: string; priority?: string; alertId?: string }) {
+  const { data } = await api.post("/api/auditor/investigations", body);
+  return data as Investigation;
+}
+
+export async function updateInvestigation(id: string, body: { status?: string; findings?: string; resolution?: string; priority?: string }) {
+  const { data } = await api.patch(`/api/auditor/investigations/${id}`, body);
+  return data as Investigation;
+}
+
+// Member Activity
+export async function fetchMemberActivity(memberId: string) {
+  const { data } = await api.get(`/api/auditor/member-activity/${memberId}`);
+  return data;
+}
+
+// Fraud Analytics
+export interface FraudAnalyticsData {
+  monthlyTrends: { month: string; total: number; resolved: number; critical: number; high: number; medium: number; low: number }[];
+  fraudByType: { type: string; count: number }[];
+  highRiskMembers: { memberId: string; fullName: string; status: string; balance: number; riskLevel: string; totalScore: number }[];
+  riskDistribution: Record<string, number>;
+  detectionStats: { totalAlerts: number; resolvedAlerts: number; resolutionRate: number; confirmedFraud: number; unresolvedAlerts: number };
+  suspiciousPatterns: { type: string; count: number; totalAmount: number }[];
+}
+
+export async function fetchFraudAnalytics(): Promise<FraudAnalyticsData> {
+  const { data } = await api.get("/api/auditor/analytics");
+  return data;
+}
