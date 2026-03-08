@@ -136,8 +136,9 @@ async function executeJob(job: JobDef) {
     );
   } catch (err: any) {
     const duration = Date.now() - startTime;
-    recordJobError(job.name, err.message || String(err), duration);
-    console.error(`[Automation] ✗ ${job.name} failed in ${duration}ms —`, err.message);
+    const errMsg = err?.message || String(err);
+    recordJobError(job.name, errMsg, duration);
+    console.error(`[Automation] ✗ ${job.name} failed in ${duration}ms —`, errMsg);
   }
 }
 
@@ -145,21 +146,27 @@ async function executeJob(job: JobDef) {
 
 /** Start all automated jobs */
 export function startAutomation() {
-  console.log("[Automation] Starting automated jobs...");
+  try {
+    console.log("[Automation] Starting automated jobs...");
 
-  for (const job of JOB_DEFINITIONS) {
-    initJob(job.name, job.description, true);
-    setNextRun(job.name, calculateNextRun(job.schedule));
+    for (const job of JOB_DEFINITIONS) {
+      initJob(job.name, job.description, true);
+      setNextRun(job.name, calculateNextRun(job.schedule));
 
-    const task = cron.schedule(job.schedule, () => {
-      executeJob(job);
-    });
+      const task = cron.schedule(job.schedule, () => {
+        executeJob(job).catch((err) =>
+          console.error(`[Automation] Unhandled error in ${job.name}:`, err)
+        );
+      });
 
-    cronTasks.set(job.name, task);
-    console.log(`[Automation]   → ${job.name} (${job.description})`);
+      cronTasks.set(job.name, task);
+      console.log(`[Automation]   → ${job.name} (${job.description})`);
+    }
+
+    console.log(`[Automation] ${JOB_DEFINITIONS.length} jobs registered and running.`);
+  } catch (err) {
+    console.error("[Automation] Failed to start automated jobs:", err);
   }
-
-  console.log(`[Automation] ${JOB_DEFINITIONS.length} jobs registered and running.`);
 }
 
 /** Stop all automated jobs */

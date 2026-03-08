@@ -84,8 +84,16 @@ process.on("unhandledRejection", (reason) => {
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
-  // Only exit on truly fatal errors, not connection drops
-  if (!String(err.message).includes("closed the connection") && !String(err.message).includes("ECONNRESET")) {
+  const msg = String(err.message ?? "");
+  // Only exit on truly fatal errors, not connection drops or cron issues
+  if (
+    !msg.includes("closed the connection") &&
+    !msg.includes("ECONNRESET") &&
+    !msg.includes("ETIMEDOUT") &&
+    !msg.includes("ECONNREFUSED") &&
+    !msg.includes("fetch failed") &&
+    !msg.includes("Can't reach database")
+  ) {
     process.exit(1);
   }
 });
