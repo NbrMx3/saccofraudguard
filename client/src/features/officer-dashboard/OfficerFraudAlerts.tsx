@@ -13,8 +13,10 @@ import {
   Shield,
   ArrowUpCircle,
   Loader2,
+  Flag,
 } from "lucide-react";
 import { toast } from "sonner";
+import { updateMemberStatus } from "@/services/memberService";
 
 const severityColors: Record<string, string> = {
   LOW: "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -32,6 +34,7 @@ export default function OfficerFraudAlerts() {
   const [severity, setSeverity] = useState("");
   const [resolved, setResolved] = useState("false");
   const [resolving, setResolving] = useState<string | null>(null);
+  const [flagging, setFlagging] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -76,6 +79,18 @@ export default function OfficerFraudAlerts() {
       toast.error("Failed to escalate alert");
     } finally {
       setResolving(null);
+    }
+  };
+
+  const handleFlagMember = async (memberId: string, memberName: string) => {
+    setFlagging(memberId);
+    try {
+      await updateMemberStatus(memberId, "FLAGGED");
+      toast.success(`${memberName} has been flagged for suspicious activity`);
+    } catch {
+      toast.error("Failed to flag member");
+    } finally {
+      setFlagging(null);
     }
   };
 
@@ -171,6 +186,19 @@ export default function OfficerFraudAlerts() {
                 </div>
                 {!alert.resolved && (
                   <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => handleFlagMember(alert.member.id, alert.member.fullName)}
+                      disabled={flagging === alert.member.id}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-500 dark:text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                      title="Flag member for suspicious activity"
+                    >
+                      {flagging === alert.member.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Flag className="h-3.5 w-3.5" />
+                      )}
+                      Flag
+                    </button>
                     <button
                       onClick={() => handleEscalate(alert.id)}
                       disabled={resolving === alert.id}

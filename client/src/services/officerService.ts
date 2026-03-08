@@ -9,7 +9,7 @@ export interface OfficerFraudAlert {
   resolved: boolean;
   resolvedAt: string | null;
   resolvedBy: { firstName: string; lastName: string } | null;
-  member: { memberId: string; fullName: string };
+  member: { id: string; memberId: string; fullName: string };
   transaction: { txRef: string; type: string; amount: number } | null;
   createdAt: string;
 }
@@ -196,5 +196,184 @@ export async function fetchActivityLog(params?: {
     total: number;
     page: number;
     totalPages: number;
+  };
+}
+
+// ── Loan Management ───────────────────────────────────────────────────
+export interface ManagedLoan {
+  id: string;
+  loanRef: string;
+  amount: number;
+  interestRate: number;
+  termMonths: number;
+  monthlyPayment: number;
+  totalRepaid: number;
+  outstandingBalance: number;
+  status: string;
+  purpose: string | null;
+  createdAt: string;
+  updatedAt: string;
+  member: { id: string; memberId: string; fullName: string; phoneNumber: string; status: string };
+  approvedBy: { firstName: string; lastName: string } | null;
+}
+
+export interface DefaultRiskLoan {
+  id: string;
+  loanRef: string;
+  amount: number;
+  termMonths: number;
+  monthlyPayment: number;
+  totalRepaid: number;
+  outstandingBalance: number;
+  createdAt: string;
+  member: { memberId: string; fullName: string };
+  monthsElapsed: number;
+  expectedRepaid: number;
+  repaymentRatio: number;
+  riskLevel: string;
+}
+
+export interface LoanManagementData {
+  loans: ManagedLoan[];
+  total: number;
+  page: number;
+  totalPages: number;
+  stats: {
+    activeLoans: number;
+    pendingLoans: number;
+    defaultedLoans: number;
+    completedLoans: number;
+    totalOutstanding: number;
+    totalRepaid: number;
+  };
+  defaultRisk: DefaultRiskLoan[];
+}
+
+export async function fetchLoanManagement(params?: {
+  page?: number;
+  status?: string;
+  search?: string;
+}) {
+  const { data } = await api.get("/api/officer/loans/manage", { params });
+  return data as LoanManagementData;
+}
+
+export async function approveLoan(id: string) {
+  const { data } = await api.patch(`/api/officer/loans/${id}/status`, { action: "approve" });
+  return data;
+}
+
+export async function rejectLoan(id: string) {
+  const { data } = await api.patch(`/api/officer/loans/${id}/status`, { action: "reject" });
+  return data;
+}
+
+// ── Member Risk Profiles ──────────────────────────────────────────────
+export interface RiskProfile {
+  id: string;
+  totalPoints: number;
+  riskLevel: string;
+  frequencyPoints: number;
+  amountPoints: number;
+  behaviorPoints: number;
+  noDepositPoints: number;
+  avgTransactionAmount: number | null;
+  transactionFrequency: number | null;
+  lastCalculatedAt: string;
+  member: {
+    id: string;
+    memberId: string;
+    fullName: string;
+    phoneNumber: string;
+    email: string;
+    status: string;
+    balance: number;
+  };
+  alertCount: number;
+  unresolvedAlerts: number;
+  activeLoan: { loanRef: string; status: string; outstandingBalance: number } | null;
+}
+
+export interface RiskProfileData {
+  profiles: RiskProfile[];
+  total: number;
+  page: number;
+  totalPages: number;
+  summary: { high: number; medium: number; low: number; critical: number };
+}
+
+export async function fetchMemberRiskProfiles(params?: {
+  page?: number;
+  riskLevel?: string;
+  search?: string;
+}) {
+  const { data } = await api.get("/api/officer/member-risk-profiles", { params });
+  return data as RiskProfileData;
+}
+
+export interface RiskDetailData {
+  member: {
+    id: string;
+    memberId: string;
+    fullName: string;
+    phoneNumber: string;
+    email: string;
+    status: string;
+    balance: number;
+  };
+  riskScore: {
+    totalPoints: number;
+    riskLevel: string;
+    frequencyPoints: number;
+    amountPoints: number;
+    behaviorPoints: number;
+    noDepositPoints: number;
+    avgTransactionAmount: number | null;
+    transactionFrequency: number | null;
+    lastCalculatedAt: string;
+  } | null;
+  alerts: {
+    id: string;
+    type: string;
+    severity: string;
+    description: string;
+    resolved: boolean;
+    createdAt: string;
+  }[];
+  recentTransactions: {
+    id: string;
+    txRef: string;
+    type: string;
+    amount: number;
+    status: string;
+    createdAt: string;
+  }[];
+  loans: {
+    loanRef: string;
+    amount: number;
+    outstandingBalance: number;
+    status: string;
+    createdAt: string;
+  }[];
+}
+
+export async function fetchMemberRiskDetail(memberId: string) {
+  const { data } = await api.get(`/api/officer/member-risk-profiles/${memberId}`);
+  return data as RiskDetailData;
+}
+
+// ── Transfers ─────────────────────────────────────────────────────────
+export async function processTransfer(payload: {
+  fromMemberId: string;
+  toMemberId: string;
+  amount: number;
+  description?: string;
+}) {
+  const { data } = await api.post("/api/officer/transfer", payload);
+  return data as {
+    message: string;
+    senderBalance: number;
+    receiverBalance: number;
+    fraudCheck: { flagged: boolean; alerts: { type: string; severity: string; description: string }[] };
   };
 }

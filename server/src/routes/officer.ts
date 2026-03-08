@@ -5,6 +5,7 @@ import {
   authorize,
   type AuthRequest,
 } from "../middleware/auth.js";
+import { runFraudCheck } from "../utils/fraudCheck.js";
 import multer from "multer";
 
 const router: express.Router = express.Router();
@@ -42,7 +43,7 @@ router.get("/fraud-alerts", async (req: AuthRequest, res: Response): Promise<voi
           resolved: true,
           resolvedAt: true,
           resolvedBy: { select: { firstName: true, lastName: true } },
-          member: { select: { memberId: true, fullName: true } },
+          member: { select: { id: true, memberId: true, fullName: true } },
           transaction: { select: { txRef: true, type: true, amount: true } },
           createdAt: true,
         },
@@ -490,6 +491,445 @@ router.get("/activity-log", async (req: AuthRequest, res: Response): Promise<voi
     res.json({ logs, total, page, totalPages: Math.ceil(total / limit) });
   } catch (error) {
     console.error("Activity log error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+//  LOAN MANAGEMENT — comprehensive loan tracking
+// ═══════════════════════════════════════════════════════════════════
+
+router.get("/loans/manage", async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit as string) || 20);
+    const status = req.query.status as string | undefined;
+    const search = req.query.search as string | undefined;
+
+    const where: Record<string, unknown> = {};
+    if (status && ["PENDING", "APPROVED", "ACTIVE", "COMPLETED", "DEFAULTED", "REJECTED"].includes(status)) {
+      where.status = status;
+    }
+    if (search) {
+      where.OR = [
+        { loanRef: { contains: search, mode: "insensitive" } },
+        { member: { fullName: { contains: search, mode: "insensitive" } } },
+        { member: { memberId: { contains: search, mode: "insensitive" } } },
+      ];
+    }
+
+    const [loans, total, stats] = await Promise.all([
+      prisma.loan.findMany({
+        where,
+        select: {
+          id: true,
+          loanRef: true,
+          amount: true,
+          interestRate: true,
+          termMonths: true,
+          monthlyPayment: true,
+          totalRepaid: true,
+          outstandingBalance: true,
+          status: true,
+          purpose: true,
+          createdAt: true,
+          updatedAt: true,
+          member: { select: { id: true, memberId: true, fullName: true, phoneNumber: true, status: true } },
+          approvedBy: { select: { firstName: true, lastName: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.loan.count({ where }),
+      Promise.all([
+        prisma.loan.count({ where: { status: "ACTIVE" } }),
+        prisma.loan.count({ where: { status: "PENDING" } }),
+        prisma.loan.count({ where: { status: "DEFAULTED" } }),
+        prisma.loan.count({ where: { status: "COMPLETED" } }),
+        prisma.loan.aggregate({ where: { status: "ACTIVE" }, _sum: { outstandingBalance: true } }),
+        prisma.loan.aggregate({ where: { status: "ACTIVE" }, _sum: { totalRepaid: true } }),
+      ]),
+    ]);
+
+    // Default risk: active loans where repayment is behind schedule
+    const activeLoans = await prisma.loan.findMany({
+      where: { status: "ACTIVE" },
+      select: {
+        id: true,
+        loanRef: true,
+        amount: true,
+        termMonths: true,
+        monthlyPayment: true,
+        totalRepaid: true,
+        outstandingBalance: true,
+        createdAt: true,
+        member: { select: { memberId: true, fullName: true } },
+      },
+    });
+
+    const defaultRisk = activeLoans
+      .map((loan) => {
+        const monthsElapsed = Math.max(1, Math.floor((Date.now() - new Date(loan.createdAt).getTime()) / (30 * 24 * 60 * 60 * 1000)));
+        const expectedRepaid = Math.min(loan.amount, loan.monthlyPayment * monthsElapsed);
+        const repaymentRatio = expectedRepaid > 0 ? loan.totalRepaid / expectedRepaid : 1;
+        return {
+          ...loan,
+          monthsElapsed,
+          expectedRepaid: Math.round(expectedRepaid),
+          repaymentRatio: Math.round(repaymentRatio * 100),
+          riskLevel: repaymentRatio < 0.5 ? "HIGH" : repaymentRatio < 0.8 ? "MEDIUM" : "LOW",
+        };
+      })
+      .filter((l) => l.repaymentRatio < 80)
+      .sort((a, b) => a.repaymentRatio - b.repaymentRatio)
+      .slice(0, 20);
+
+    res.json({
+      loans,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      stats: {
+        activeLoans: stats[0],
+        pendingLoans: stats[1],
+        defaultedLoans: stats[2],
+        completedLoans: stats[3],
+        totalOutstanding: stats[4]._sum.outstandingBalance ?? 0,
+        totalRepaid: stats[5]._sum.totalRepaid ?? 0,
+      },
+      defaultRisk,
+    });
+  } catch (error) {
+    console.error("Loan management error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Approve or reject a loan
+router.patch("/loans/:id/status", async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const { action } = req.body; // "approve" | "reject"
+
+    const loan = await prisma.loan.findUnique({ where: { id }, include: { member: true } });
+    if (!loan) { res.status(404).json({ error: "Loan not found" }); return; }
+
+    if (action === "approve") {
+      if (loan.status !== "PENDING") {
+        res.status(400).json({ error: "Only pending loans can be approved" });
+        return;
+      }
+
+      // Disburse into member's balance
+      const member = loan.member;
+      const balanceBefore = member.balance;
+      const balanceAfter = balanceBefore + loan.amount;
+
+      function generateTxRef(): string {
+        const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+        const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
+        return `LND-${date}-${rand}`;
+      }
+
+      const transaction = await prisma.transaction.create({
+        data: {
+          txRef: generateTxRef(),
+          type: "LOAN_DISBURSEMENT",
+          amount: loan.amount,
+          balanceBefore,
+          balanceAfter,
+          description: `Loan disbursement — ${loan.loanRef}`,
+          memberId: member.id,
+          processedById: req.user!.userId,
+          loanId: loan.id,
+        },
+      });
+
+      await prisma.member.update({ where: { id: member.id }, data: { balance: balanceAfter } });
+      await prisma.loan.update({ where: { id }, data: { status: "ACTIVE", approvedById: req.user!.userId } });
+
+      await runFraudCheck(member.id, transaction.id, "LOAN_DISBURSEMENT", loan.amount);
+
+      await prisma.auditLog.create({
+        data: {
+          action: "APPROVE_LOAN",
+          entity: "Loan",
+          entityId: id,
+          details: `Approved & disbursed ${loan.loanRef} — KES ${loan.amount}`,
+          userId: req.user!.userId,
+          ipAddress: req.ip ?? null,
+        },
+      });
+
+      res.json({ message: "Loan approved and disbursed", loan: { ...loan, status: "ACTIVE" } });
+    } else if (action === "reject") {
+      if (loan.status !== "PENDING") {
+        res.status(400).json({ error: "Only pending loans can be rejected" });
+        return;
+      }
+
+      await prisma.loan.update({ where: { id }, data: { status: "REJECTED" } });
+
+      await prisma.auditLog.create({
+        data: {
+          action: "REJECT_LOAN",
+          entity: "Loan",
+          entityId: id,
+          details: `Rejected ${loan.loanRef}`,
+          userId: req.user!.userId,
+          ipAddress: req.ip ?? null,
+        },
+      });
+
+      res.json({ message: "Loan rejected", loan: { ...loan, status: "REJECTED" } });
+    } else {
+      res.status(400).json({ error: "Invalid action. Use 'approve' or 'reject'" });
+    }
+  } catch (error) {
+    console.error("Loan status update error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+//  MEMBER RISK PROFILES
+// ═══════════════════════════════════════════════════════════════════
+
+router.get("/member-risk-profiles", async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit as string) || 20);
+    const riskLevel = req.query.riskLevel as string | undefined;
+    const search = req.query.search as string | undefined;
+
+    const where: Record<string, unknown> = {};
+    if (riskLevel && ["LOW", "MEDIUM", "HIGH", "CRITICAL"].includes(riskLevel)) {
+      where.riskLevel = riskLevel;
+    }
+    if (search) {
+      where.member = {
+        OR: [
+          { fullName: { contains: search, mode: "insensitive" } },
+          { memberId: { contains: search, mode: "insensitive" } },
+          { phoneNumber: { contains: search, mode: "insensitive" } },
+        ],
+      };
+    }
+
+    const [profiles, total] = await Promise.all([
+      prisma.memberRiskScore.findMany({
+        where,
+        select: {
+          id: true,
+          totalPoints: true,
+          riskLevel: true,
+          frequencyPoints: true,
+          amountPoints: true,
+          behaviorPoints: true,
+          noDepositPoints: true,
+          avgTransactionAmount: true,
+          transactionFrequency: true,
+          lastCalculatedAt: true,
+          member: {
+            select: {
+              id: true,
+              memberId: true,
+              fullName: true,
+              phoneNumber: true,
+              email: true,
+              status: true,
+              balance: true,
+            },
+          },
+        },
+        orderBy: { totalPoints: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.memberRiskScore.count({ where }),
+    ]);
+
+    // Enrich with alert counts and loan status
+    const enriched = await Promise.all(
+      profiles.map(async (p) => {
+        const [alertCount, unresolvedAlerts, activeLoan] = await Promise.all([
+          prisma.fraudAlert.count({ where: { memberId: p.member.id } }),
+          prisma.fraudAlert.count({ where: { memberId: p.member.id, resolved: false } }),
+          prisma.loan.findFirst({
+            where: { memberId: p.member.id, status: { in: ["ACTIVE", "PENDING"] } },
+            select: { loanRef: true, status: true, outstandingBalance: true },
+          }),
+        ]);
+        return { ...p, alertCount, unresolvedAlerts, activeLoan };
+      })
+    );
+
+    // Summary stats
+    const [totalHigh, totalMedium, totalLow, totalCritical] = await Promise.all([
+      prisma.memberRiskScore.count({ where: { riskLevel: "HIGH" } }),
+      prisma.memberRiskScore.count({ where: { riskLevel: "MEDIUM" } }),
+      prisma.memberRiskScore.count({ where: { riskLevel: "LOW" } }),
+      prisma.memberRiskScore.count({ where: { riskLevel: "CRITICAL" } }),
+    ]);
+
+    res.json({
+      profiles: enriched,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      summary: { high: totalHigh, medium: totalMedium, low: totalLow, critical: totalCritical },
+    });
+  } catch (error) {
+    console.error("Member risk profiles error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Single member risk detail
+router.get("/member-risk-profiles/:memberId", async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const memberId = req.params.memberId as string;
+
+    const member = await prisma.member.findUnique({
+      where: { id: memberId },
+      select: {
+        id: true,
+        memberId: true,
+        fullName: true,
+        phoneNumber: true,
+        email: true,
+        status: true,
+        balance: true,
+      },
+    });
+    if (!member) { res.status(404).json({ error: "Member not found" }); return; }
+
+    const [riskScore, alerts, recentTransactions, loans] = await Promise.all([
+      prisma.memberRiskScore.findUnique({ where: { memberId } }),
+      prisma.fraudAlert.findMany({
+        where: { memberId },
+        select: { id: true, type: true, severity: true, description: true, resolved: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
+      prisma.transaction.findMany({
+        where: { memberId },
+        select: { id: true, txRef: true, type: true, amount: true, status: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+      }),
+      prisma.loan.findMany({
+        where: { memberId },
+        select: { loanRef: true, amount: true, outstandingBalance: true, status: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
+
+    res.json({ member, riskScore, alerts, recentTransactions, loans });
+  } catch (error) {
+    console.error("Member risk detail error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════
+//  TRANSFERS — transfer between members
+// ═══════════════════════════════════════════════════════════════════
+
+router.post("/transfer", async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { fromMemberId, toMemberId, amount, description } = req.body;
+
+    if (!fromMemberId || !toMemberId || !amount || amount <= 0) {
+      res.status(400).json({ error: "Source member, destination member, and positive amount are required" });
+      return;
+    }
+    if (fromMemberId === toMemberId) {
+      res.status(400).json({ error: "Cannot transfer to the same account" });
+      return;
+    }
+
+    const [sender, receiver] = await Promise.all([
+      prisma.member.findUnique({ where: { id: fromMemberId } }),
+      prisma.member.findUnique({ where: { id: toMemberId } }),
+    ]);
+
+    if (!sender) { res.status(404).json({ error: "Sender member not found" }); return; }
+    if (!receiver) { res.status(404).json({ error: "Receiver member not found" }); return; }
+    if (sender.status === "SUSPENDED") { res.status(403).json({ error: "Sender account is suspended" }); return; }
+    if (receiver.status === "SUSPENDED") { res.status(403).json({ error: "Receiver account is suspended" }); return; }
+    if (sender.balance < amount) {
+      res.status(400).json({ error: `Insufficient balance. Available: KES ${sender.balance.toLocaleString()}` });
+      return;
+    }
+
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const rand1 = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const rand2 = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    // Withdrawal from sender
+    const senderBalBefore = sender.balance;
+    const senderBalAfter = senderBalBefore - amount;
+    const withdrawalTx = await prisma.transaction.create({
+      data: {
+        txRef: `TRF-${dateStr}-${rand1}`,
+        type: "WITHDRAWAL",
+        amount,
+        balanceBefore: senderBalBefore,
+        balanceAfter: senderBalAfter,
+        description: description || `Transfer to ${receiver.fullName} (${receiver.memberId})`,
+        memberId: fromMemberId,
+        processedById: req.user!.userId,
+      },
+    });
+
+    // Deposit to receiver
+    const receiverBalBefore = receiver.balance;
+    const receiverBalAfter = receiverBalBefore + amount;
+    const depositTx = await prisma.transaction.create({
+      data: {
+        txRef: `TRF-${dateStr}-${rand2}`,
+        type: "DEPOSIT",
+        amount,
+        balanceBefore: receiverBalBefore,
+        balanceAfter: receiverBalAfter,
+        description: description || `Transfer from ${sender.fullName} (${sender.memberId})`,
+        memberId: toMemberId,
+        processedById: req.user!.userId,
+      },
+    });
+
+    // Update balances
+    await Promise.all([
+      prisma.member.update({ where: { id: fromMemberId }, data: { balance: senderBalAfter } }),
+      prisma.member.update({ where: { id: toMemberId }, data: { balance: receiverBalAfter } }),
+    ]);
+
+    // Run fraud checks on both
+    const fraudResult = await runFraudCheck(fromMemberId, withdrawalTx.id, "WITHDRAWAL", amount);
+
+    await prisma.auditLog.create({
+      data: {
+        action: "PROCESS_TRANSFER",
+        entity: "Transaction",
+        entityId: withdrawalTx.id,
+        details: `Transfer KES ${amount} from ${sender.memberId} to ${receiver.memberId}`,
+        userId: req.user!.userId,
+        ipAddress: req.ip ?? null,
+      },
+    });
+
+    res.status(201).json({
+      message: `Transfer of KES ${amount.toLocaleString()} completed successfully`,
+      withdrawal: withdrawalTx,
+      deposit: depositTx,
+      senderBalance: senderBalAfter,
+      receiverBalance: receiverBalAfter,
+      fraudCheck: fraudResult,
+    });
+  } catch (error) {
+    console.error("Transfer error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

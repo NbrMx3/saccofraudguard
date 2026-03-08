@@ -17,6 +17,7 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  ArrowLeftRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -36,8 +37,9 @@ import {
   fetchLoans,
 } from "@/services/transactionService";
 import { fetchMembers, type Member } from "@/services/memberService";
+import { processTransfer } from "@/services/officerService";
 
-type TransactionTab = "deposit" | "withdraw" | "loan-apply" | "loan-repay" | "history" | "balance";
+type TransactionTab = "deposit" | "withdraw" | "transfer" | "loan-apply" | "loan-repay" | "history" | "balance";
 
 // ═══════════════════════════════════════════════════════════════════
 // MAIN TRANSACTIONS PAGE
@@ -56,6 +58,7 @@ export default function TransactionsPage() {
   const tabs: { key: TransactionTab; label: string; icon: React.ElementType }[] = [
     { key: "deposit", label: "Deposit", icon: ArrowDownToLine },
     { key: "withdraw", label: "Withdraw", icon: ArrowUpFromLine },
+    { key: "transfer", label: "Transfer", icon: ArrowLeftRight },
     { key: "loan-apply", label: "Loan Application", icon: Landmark },
     { key: "loan-repay", label: "Loan Repayment", icon: HandCoins },
     { key: "history", label: "History", icon: History },
@@ -102,6 +105,7 @@ export default function TransactionsPage() {
       {/* Tab content */}
       {activeTab === "deposit" && <DepositForm onSuccess={refresh} />}
       {activeTab === "withdraw" && <WithdrawForm onSuccess={refresh} />}
+      {activeTab === "transfer" && <TransferForm onSuccess={refresh} />}
       {activeTab === "loan-apply" && <LoanApplyForm onSuccess={refresh} />}
       {activeTab === "loan-repay" && <LoanRepayForm onSuccess={refresh} />}
       {activeTab === "history" && <TransactionHistoryTable refreshKey={refreshKey} />}
@@ -321,6 +325,84 @@ function WithdrawForm({ onSuccess }: { onSuccess: () => void }) {
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-500 disabled:opacity-50">
           {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <ArrowUpFromLine className="h-4 w-4" />}
           {loading ? "Processing…" : "Process Withdrawal"}
+        </button>
+      </form>
+      {fraudResult && <FraudBanner flagged={fraudResult.flagged} alerts={fraudResult.alerts} />}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TRANSFER FORM
+// ═══════════════════════════════════════════════════════════════════
+function TransferForm({ onSuccess }: { onSuccess: () => void }) {
+  const [fromMemberId, setFromMemberId] = useState("");
+  const [toMemberId, setToMemberId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [fraudResult, setFraudResult] = useState<{ flagged: boolean; alerts: Array<{ type: string; severity: string; description: string }> } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fromMemberId) { toast.error("Select the sender member"); return; }
+    if (!toMemberId) { toast.error("Select the receiver member"); return; }
+    if (fromMemberId === toMemberId) { toast.error("Cannot transfer to the same account"); return; }
+    if (!amount || Number(amount) <= 0) { toast.error("Enter a valid amount"); return; }
+    setLoading(true);
+    setFraudResult(null);
+    try {
+      const res = await processTransfer({
+        fromMemberId,
+        toMemberId,
+        amount: Number(amount),
+        description: description || undefined,
+      });
+      toast.success(res.message);
+      setFraudResult(res.fraudCheck);
+      setAmount("");
+      setDescription("");
+      onSuccess();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } }).response?.data?.error || "Transfer failed";
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-white/6 bg-slate-900/50 p-6">
+      <div className="mb-5 flex items-center gap-3">
+        <span className="rounded-lg bg-indigo-500/10 p-2 text-indigo-400"><ArrowLeftRight className="h-5 w-5" /></span>
+        <div>
+          <h3 className="text-sm font-semibold text-white">Process Transfer</h3>
+          <p className="text-xs text-slate-400">Transfer funds between SACCO members</p>
+        </div>
+      </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <p className="mb-1 text-xs font-semibold text-indigo-400 uppercase tracking-wider">From (Sender)</p>
+          <MemberSearch selectedId={fromMemberId} onSelect={(m) => setFromMemberId(m.id)} />
+        </div>
+        <div>
+          <p className="mb-1 text-xs font-semibold text-indigo-400 uppercase tracking-wider">To (Receiver)</p>
+          <MemberSearch selectedId={toMemberId} onSelect={(m) => setToMemberId(m.id)} />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-slate-300">Amount (KES)</label>
+          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} min="1" step="any"
+            placeholder="0.00" className="w-full rounded-lg border border-white/8 bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-slate-300">Description (optional)</label>
+          <input type="text" value={description} onChange={(e) => setDescription(e.target.value)}
+            placeholder="e.g. Payment for shares" className="w-full rounded-lg border border-white/8 bg-slate-800/50 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30" />
+        </div>
+        <button disabled={loading} type="submit"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:opacity-50">
+          {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <ArrowLeftRight className="h-4 w-4" />}
+          {loading ? "Processing…" : "Process Transfer"}
         </button>
       </form>
       {fraudResult && <FraudBanner flagged={fraudResult.flagged} alerts={fraudResult.alerts} />}

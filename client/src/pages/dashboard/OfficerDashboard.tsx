@@ -12,6 +12,8 @@ import CaseInvestigationPage from "@/features/officer-dashboard/CaseInvestigatio
 import ReportsPage from "@/features/officer-dashboard/ReportsPage";
 import DocumentUploadPage from "@/features/officer-dashboard/DocumentUploadPage";
 import ActivityLogPage from "@/features/officer-dashboard/ActivityLogPage";
+import LoanManagementPage from "@/features/officer-dashboard/LoanManagementPage";
+import MemberRiskProfilePage from "@/features/officer-dashboard/MemberRiskProfilePage";
 import type { Member } from "@/services/memberService";
 import {
   LayoutDashboard,
@@ -24,13 +26,17 @@ import {
   Clock,
   BarChart3,
   TrendingUp,
+  Landmark,
+  ShieldAlert,
 } from "lucide-react";
 
 type OfficerView =
   | "dashboard"
   | "members"
   | "transactions"
+  | "loan-management"
   | "fraud-alerts"
+  | "risk-profiles"
   | "cases"
   | "reports"
   | "documents"
@@ -65,10 +71,22 @@ export default function OfficerDashboard() {
       onClick: () => setActiveView("transactions"),
     },
     {
+      label: "Loan Management",
+      icon: Landmark,
+      active: activeView === "loan-management",
+      onClick: () => setActiveView("loan-management"),
+    },
+    {
       label: "Fraud Alerts",
       icon: AlertTriangle,
       active: activeView === "fraud-alerts",
       onClick: () => setActiveView("fraud-alerts"),
+    },
+    {
+      label: "Risk Profiles",
+      icon: ShieldAlert,
+      active: activeView === "risk-profiles",
+      onClick: () => setActiveView("risk-profiles"),
     },
     {
       label: "Case Investigation",
@@ -168,7 +186,9 @@ export default function OfficerDashboard() {
       )}
 
       {activeView === "transactions" && <TransactionsPage />}
+      {activeView === "loan-management" && <LoanManagementPage />}
       {activeView === "fraud-alerts" && <OfficerFraudAlerts />}
+      {activeView === "risk-profiles" && <MemberRiskProfilePage />}
       {activeView === "cases" && <CaseInvestigationPage />}
       {activeView === "reports" && <ReportsPage />}
       {activeView === "documents" && <DocumentUploadPage />}
