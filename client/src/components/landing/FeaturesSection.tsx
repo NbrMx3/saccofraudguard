@@ -1,34 +1,34 @@
 import {
-  Activity,
-  ShieldCheck,
-  Brain,
-  FileSearch,
+  Zap,
+  Globe,
+  Puzzle,
+  Settings,
 } from 'lucide-react'
 
 const features = [
   {
-    icon: Activity,
-    title: 'Real-Time Transaction Monitoring',
+    icon: Zap,
+    title: 'Real-Time',
     description:
-      'Track every transaction as it happens with live dashboards and instant anomaly detection across all SACCO operations.',
+      'Transactions are evaluated before they are completed, detecting fraudulent activity in real time without degrading system performance.',
   },
   {
-    icon: ShieldCheck,
-    title: 'Risk Scoring Engine',
+    icon: Globe,
+    title: 'API-Driven',
     description:
-      'Automatically assign risk scores to transactions using configurable rule-based algorithms tailored for Kenyan SACCOs.',
+      'Standardised messages are submitted to a dedicated fraud-detection API, delivering fraud screening as-a-Service for any SACCO integration.',
   },
   {
-    icon: Brain,
-    title: 'Behavioral Pattern Analysis',
+    icon: Puzzle,
+    title: 'Rules-Based',
     description:
-      'Detect unusual member activity by analyzing spending patterns, frequency anomalies, and deviation from historical behaviour.',
+      'Discrete rule modules each perform a single evaluation task, delivering clear and explainable assessments for every transaction behaviour.',
   },
   {
-    icon: FileSearch,
-    title: 'Secure Audit Trail',
+    icon: Settings,
+    title: 'Configurable',
     description:
-      'Maintain tamper-proof logs of every action, transaction, and system event for full regulatory compliance and accountability.',
+      'Detection behaviour is defined through configuration managed by administrators, changeable through the dashboard without touching code.',
   },
 ]
 

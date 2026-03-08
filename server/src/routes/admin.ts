@@ -12,6 +12,7 @@ import {
   serverStartedAt,
 } from "../automation/automationState.js";
 import { toggleJob, triggerJob, getJobNames } from "../automation/scheduler.js";
+import { invalidateThresholdCache } from "../utils/configHelper.js";
 
 const router: express.Router = express.Router();
 
@@ -582,6 +583,7 @@ router.put(
         },
       });
 
+      invalidateThresholdCache();
       res.json({ message: "Configuration updated" });
     } catch (error) {
       console.error("Update config error:", error);

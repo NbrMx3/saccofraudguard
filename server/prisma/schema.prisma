@@ -389,6 +389,8 @@ enum RuleType {
   FREQUENCY
   AMOUNT
   NO_DEPOSIT
+  VELOCITY
+  TEMPORAL
   CUSTOM
 }
 

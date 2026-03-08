@@ -1,6 +1,8 @@
 import { Router, type Response, type Router as RouterType } from "express";
 import { type AuthRequest, authenticate, authorize } from "../middleware/auth.js";
 import prisma, { withRetry } from "../lib/prisma.js";
+import { preScreenTransaction } from "../utils/fraudCheck.js";
+import { getFraudThresholds, invalidateThresholdCache } from "../utils/configHelper.js";
 
 const router: RouterType = Router();
 
@@ -20,6 +22,134 @@ async function logAction(
     data: { action, entity, entityId, details, ipAddress: ip, userId },
   });
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// 0. FRAUD DETECTION API (API-DRIVEN — as-a-Service)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /assess — Standalone fraud risk assessment (read-only, no side effects).
+ * Accepts a member ID and returns a complete risk profile without creating
+ * any decisions, alerts, or modifying member status.
+ * This is the core "fraud detection as-a-Service" endpoint.
+ */
+router.post("/assess", async (req: AuthRequest, res: Response) => {
+  try {
+    const { memberId } = req.body;
+    if (!memberId) {
+      res.status(400).json({ error: "memberId is required" });
+      return;
+    }
+
+    const member = await prisma.member.findUnique({
+      where: { id: memberId },
+      select: {
+        id: true, memberId: true, fullName: true, status: true, balance: true,
+      },
+    });
+    if (!member) {
+      res.status(404).json({ error: "Member not found" });
+      return;
+    }
+
+    // Risk score
+    const riskScore = await prisma.memberRiskScore.findUnique({
+      where: { memberId },
+    });
+
+    // Unresolved alerts
+    const unresolvedAlerts = await prisma.fraudAlert.count({
+      where: { memberId, resolved: false },
+    });
+    const recentAlerts = await prisma.fraudAlert.findMany({
+      where: { memberId },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: { type: true, severity: true, description: true, resolved: true, createdAt: true },
+    });
+
+    // Rule violations
+    const unreviewedViolations = await prisma.ruleViolation.count({
+      where: { memberId, reviewed: false },
+    });
+
+    // Active decisions
+    const pendingDecisions = await prisma.fraudDecision.count({
+      where: { memberId, requiresApproval: true, approved: null },
+    });
+
+    // Transaction stats
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
+    const recentTxCount = await prisma.transaction.count({
+      where: { memberId, createdAt: { gte: thirtyDaysAgo } },
+    });
+    const flaggedTxCount = await prisma.transaction.count({
+      where: { memberId, status: "FLAGGED" },
+    });
+
+    // Thresholds in effect
+    const thresholds = await getFraudThresholds();
+
+    res.json({
+      member: {
+        id: member.id,
+        memberId: member.memberId,
+        fullName: member.fullName,
+        status: member.status,
+        balance: member.balance,
+      },
+      riskAssessment: {
+        riskLevel: riskScore?.riskLevel ?? "UNKNOWN",
+        totalPoints: riskScore?.totalPoints ?? 0,
+        breakdown: {
+          frequencyPoints: riskScore?.frequencyPoints ?? 0,
+          amountPoints: riskScore?.amountPoints ?? 0,
+          behaviorPoints: riskScore?.behaviorPoints ?? 0,
+          noDepositPoints: riskScore?.noDepositPoints ?? 0,
+        },
+        lastCalculatedAt: riskScore?.lastCalculatedAt ?? null,
+      },
+      alerts: {
+        unresolved: unresolvedAlerts,
+        recent: recentAlerts,
+      },
+      violations: {
+        unreviewed: unreviewedViolations,
+      },
+      decisions: {
+        pendingApprovals: pendingDecisions,
+      },
+      activity: {
+        transactionsLast30Days: recentTxCount,
+        flaggedTransactions: flaggedTxCount,
+      },
+      thresholds,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * POST /screen-transaction — Pre-transaction fraud screening (read-only).
+ * Evaluates whether a proposed transaction should proceed, be blocked,
+ * or require additional approval — BEFORE committing the transaction.
+ * Returns risk warnings and approval requirements.
+ */
+router.post("/screen-transaction", async (req: AuthRequest, res: Response) => {
+  try {
+    const { memberId, type, amount } = req.body;
+    if (!memberId || !type || !amount) {
+      res.status(400).json({ error: "memberId, type, and amount are required" });
+      return;
+    }
+
+    const screening = await preScreenTransaction(memberId, type, amount);
+    res.json(screening);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // ═══════════════════════════════════════════════════════════════════════
 // 1. RULE ENGINE
@@ -320,6 +450,7 @@ router.post("/thresholds", async (req: AuthRequest, res: Response) => {
     }
 
     await logAction(req.user!.userId, "UPDATE_THRESHOLDS", "WithdrawalThreshold", threshold.id, JSON.stringify(req.body), req.ip);
+    invalidateThresholdCache();
     res.json(threshold);
   } catch (e: any) {
     res.status(500).json({ error: e.message });

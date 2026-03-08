@@ -124,6 +124,94 @@ export async function runFraudRuleScan(): Promise<string> {
         }
       }
     }
+
+    // ── VELOCITY rules (escalating withdrawal amounts) ───────────
+    if (rule.ruleType === "VELOCITY" && rule.windowHours) {
+      const since = new Date(now.getTime() - rule.windowHours * 3600000);
+      const members = await prisma.transaction.groupBy({
+        by: ["memberId"],
+        where: {
+          type: "WITHDRAWAL",
+          status: { not: "FAILED" },
+          createdAt: { gte: since },
+        },
+        _count: { id: true },
+        having: { id: { _count: { gte: 3 } } },
+      });
+
+      for (const m of members) {
+        const recentTxs = await prisma.transaction.findMany({
+          where: {
+            memberId: m.memberId,
+            type: "WITHDRAWAL",
+            status: { not: "FAILED" },
+            createdAt: { gte: since },
+          },
+          orderBy: { createdAt: "asc" },
+          select: { id: true, amount: true },
+        });
+
+        let escalating = true;
+        for (let i = 1; i < recentTxs.length; i++) {
+          if (recentTxs[i].amount <= recentTxs[i - 1].amount) {
+            escalating = false;
+            break;
+          }
+        }
+
+        if (escalating && recentTxs.length >= 3) {
+          const exists = await prisma.ruleViolation.findFirst({
+            where: { ruleId: rule.id, memberId: m.memberId, createdAt: { gte: since } },
+          });
+          if (!exists) {
+            const lastTx = recentTxs[recentTxs.length - 1];
+            await prisma.ruleViolation.create({
+              data: {
+                ruleId: rule.id,
+                memberId: m.memberId,
+                transactionId: lastTx.id,
+                details: `${recentTxs.length} withdrawals with escalating amounts in ${rule.windowHours}h window`,
+                riskPoints: rule.riskPoints,
+              },
+            });
+            totalViolations++;
+          }
+        }
+      }
+    }
+
+    // ── TEMPORAL rules (off-hours transactions) ──────────────────
+    if (rule.ruleType === "TEMPORAL" && rule.windowHours) {
+      const since = new Date(now.getTime() - rule.windowHours * 3600000);
+      const offHourTxs = await prisma.transaction.findMany({
+        where: {
+          createdAt: { gte: since },
+          status: { not: "FAILED" },
+        },
+        select: { id: true, memberId: true, amount: true, createdAt: true },
+      });
+
+      for (const tx of offHourTxs) {
+        const hour = tx.createdAt.getUTCHours();
+        if (hour < 6 || hour >= 22) {
+          const exists = await prisma.ruleViolation.findFirst({
+            where: { ruleId: rule.id, transactionId: tx.id },
+          });
+          if (!exists) {
+            await prisma.ruleViolation.create({
+              data: {
+                ruleId: rule.id,
+                memberId: tx.memberId,
+                transactionId: tx.id,
+                details: `Transaction at ${tx.createdAt.toISOString()} outside business hours (06:00-22:00)`,
+                riskPoints: rule.riskPoints,
+              },
+            });
+            totalViolations++;
+          }
+        }
+      }
+    }
   }
 
   // Log audit entry for automated scan

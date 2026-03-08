@@ -1,7 +1,7 @@
 import express, { type Response } from "express";
 import prisma from "../lib/prisma.js";
 import { authenticate, authorize, type AuthRequest } from "../middleware/auth.js";
-import { runFraudCheck } from "../utils/fraudCheck.js";
+import { runFraudCheck, preScreenTransaction } from "../utils/fraudCheck.js";
 
 const router: express.Router = express.Router();
 
@@ -40,6 +40,13 @@ router.post(
       if (!member) { res.status(404).json({ error: "Member not found" }); return; }
       if (member.status === "SUSPENDED") { res.status(403).json({ error: "Cannot transact on a suspended account" }); return; }
 
+      // ── Real-time pre-screening ──────────────────────────────────
+      const screening = await preScreenTransaction(memberId, "DEPOSIT", amount);
+      if (!screening.allowed) {
+        res.status(403).json({ error: "Transaction blocked", screening });
+        return;
+      }
+
       const balanceBefore = member.balance;
       const balanceAfter = balanceBefore + amount;
 
@@ -58,13 +65,14 @@ router.post(
 
       await prisma.member.update({ where: { id: memberId }, data: { balance: balanceAfter } });
 
-      // Auto fraud check
+      // Real-time post-transaction fraud check
       const fraudResult = await runFraudCheck(memberId, transaction.id, "DEPOSIT", amount);
 
       res.status(201).json({
         message: "Deposit recorded successfully",
         transaction: { ...transaction, balanceAfter },
         fraudCheck: fraudResult,
+        screening,
       });
     } catch (error) {
       console.error("Deposit error:", error);
@@ -94,6 +102,13 @@ router.post(
       if (member.status === "SUSPENDED") { res.status(403).json({ error: "Cannot transact on a suspended account" }); return; }
       if (member.balance < amount) { res.status(400).json({ error: `Insufficient balance. Available: KES ${member.balance.toLocaleString()}` }); return; }
 
+      // ── Real-time pre-screening ──────────────────────────────────
+      const screening = await preScreenTransaction(memberId, "WITHDRAWAL", amount);
+      if (!screening.allowed) {
+        res.status(403).json({ error: "Transaction blocked", screening });
+        return;
+      }
+
       const balanceBefore = member.balance;
       const balanceAfter = balanceBefore - amount;
 
@@ -118,6 +133,7 @@ router.post(
         message: "Withdrawal processed successfully",
         transaction: { ...transaction, balanceAfter },
         fraudCheck: fraudResult,
+        screening,
       });
     } catch (error) {
       console.error("Withdrawal error:", error);
