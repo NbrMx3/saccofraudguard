@@ -1,4 +1,5 @@
 import express, { type Response } from "express";
+import bcrypt from "bcryptjs";
 import prisma from "../lib/prisma.js";
 import {
   authenticate,
@@ -887,6 +888,457 @@ router.get(
       });
     } catch (error) {
       console.error("Automation logs error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════
+//  CREATE USER (Admin creates new users)
+// ═══════════════════════════════════════════════════════════════════
+router.post(
+  "/users",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { nationalId, email, firstName, lastName, role, password } = req.body;
+      if (!nationalId || !email || !firstName || !lastName || !password) {
+        res.status(400).json({ error: "nationalId, email, firstName, lastName, and password are required" });
+        return;
+      }
+      if (role && !["ADMIN", "OFFICER", "AUDITOR"].includes(role)) {
+        res.status(400).json({ error: "Invalid role" });
+        return;
+      }
+      const existing = await prisma.user.findFirst({
+        where: { OR: [{ nationalId }, { email }] },
+      });
+      if (existing) {
+        res.status(409).json({ error: "A user with that national ID or email already exists" });
+        return;
+      }
+      const hashedPassword = await bcrypt.hash(password, 12);
+      const user = await prisma.user.create({
+        data: {
+          nationalId,
+          email,
+          firstName,
+          lastName,
+          role: role || "OFFICER",
+          password: hashedPassword,
+          createdById: req.user!.userId,
+        },
+        select: { id: true, nationalId: true, email: true, firstName: true, lastName: true, role: true },
+      });
+
+      await prisma.auditLog.create({
+        data: {
+          action: "USER_CREATED",
+          entity: "User",
+          entityId: user.id,
+          details: `Created user ${firstName} ${lastName} (${role || "OFFICER"})`,
+          userId: req.user!.userId,
+          ipAddress: req.ip || req.socket.remoteAddress,
+        },
+      });
+
+      res.status(201).json({ message: "User created", user });
+    } catch (error) {
+      console.error("Create user error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════
+//  RESET USER PASSWORD (Admin resets a user's password)
+// ═══════════════════════════════════════════════════════════════════
+router.patch(
+  "/users/:id/reset-password",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const { newPassword } = req.body;
+      if (!newPassword || newPassword.length < 6) {
+        res.status(400).json({ error: "Password must be at least 6 characters" });
+        return;
+      }
+      const user = await prisma.user.findUnique({ where: { id } });
+      if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
+      await prisma.user.update({ where: { id }, data: { password: hashedPassword } });
+
+      await prisma.auditLog.create({
+        data: {
+          action: "PASSWORD_RESET_BY_ADMIN",
+          entity: "User",
+          entityId: id,
+          details: `Password reset for ${user.firstName} ${user.lastName}`,
+          userId: req.user!.userId,
+          ipAddress: req.ip || req.socket.remoteAddress,
+        },
+      });
+
+      res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════
+//  USER LOGIN HISTORY
+// ═══════════════════════════════════════════════════════════════════
+router.get(
+  "/users/:id/login-history",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const user = await prisma.user.findUnique({
+        where: { id },
+        select: { id: true, firstName: true, lastName: true, lastLogin: true, createdAt: true },
+      });
+      if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+      const loginLogs = await prisma.auditLog.findMany({
+        where: {
+          userId: id,
+          action: { in: ["LOGIN", "LOGIN_SUCCESS", "LOGIN_FAILED", "LOGOUT"] },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        select: { action: true, ipAddress: true, createdAt: true, details: true },
+      });
+
+      res.json({ user, loginHistory: loginLogs });
+    } catch (error) {
+      console.error("Login history error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════
+//  SACCO / CHAMA MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════
+router.get(
+  "/saccos",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const page = Math.max(1, Number(req.query.page) || 1);
+      const limit = 20;
+      const skip = (page - 1) * limit;
+      const search = (req.query.search as string)?.trim() || "";
+
+      const where: Record<string, unknown> = {};
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: "insensitive" } },
+          { registrationNumber: { contains: search, mode: "insensitive" } },
+          { location: { contains: search, mode: "insensitive" } },
+        ];
+      }
+
+      const [saccos, total] = await Promise.all([
+        prisma.sacco.findMany({
+          where,
+          include: {
+            assignedOfficer: { select: { id: true, firstName: true, lastName: true } },
+          },
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: limit,
+        }),
+        prisma.sacco.count({ where }),
+      ]);
+
+      res.json({
+        saccos,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      });
+    } catch (error) {
+      console.error("List SACCOs error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+router.post(
+  "/saccos",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { name, registrationNumber, location, assignedOfficerId } = req.body;
+      if (!name || !registrationNumber || !location) {
+        res.status(400).json({ error: "name, registrationNumber, and location are required" });
+        return;
+      }
+
+      const existing = await prisma.sacco.findFirst({
+        where: { OR: [{ name }, { registrationNumber }] },
+      });
+      if (existing) {
+        res.status(409).json({ error: "A SACCO with that name or registration number already exists" });
+        return;
+      }
+
+      const sacco = await prisma.sacco.create({
+        data: { name, registrationNumber, location, assignedOfficerId: assignedOfficerId || null },
+        include: { assignedOfficer: { select: { id: true, firstName: true, lastName: true } } },
+      });
+
+      await prisma.auditLog.create({
+        data: {
+          action: "SACCO_CREATED",
+          entity: "Sacco",
+          entityId: sacco.id,
+          details: `SACCO "${name}" registered`,
+          userId: req.user!.userId,
+          ipAddress: req.ip || req.socket.remoteAddress,
+        },
+      });
+
+      res.status(201).json({ message: "SACCO registered", sacco });
+    } catch (error) {
+      console.error("Create SACCO error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+router.patch(
+  "/saccos/:id",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const { name, registrationNumber, location, totalMembers, status, assignedOfficerId } = req.body;
+
+      const sacco = await prisma.sacco.update({
+        where: { id },
+        data: {
+          ...(name !== undefined && { name }),
+          ...(registrationNumber !== undefined && { registrationNumber }),
+          ...(location !== undefined && { location }),
+          ...(totalMembers !== undefined && { totalMembers }),
+          ...(status !== undefined && { status }),
+          ...(assignedOfficerId !== undefined && { assignedOfficerId: assignedOfficerId || null }),
+        },
+        include: { assignedOfficer: { select: { id: true, firstName: true, lastName: true } } },
+      });
+
+      await prisma.auditLog.create({
+        data: {
+          action: "SACCO_UPDATED",
+          entity: "Sacco",
+          entityId: id,
+          details: `SACCO "${sacco.name}" updated`,
+          userId: req.user!.userId,
+          ipAddress: req.ip || req.socket.remoteAddress,
+        },
+      });
+
+      res.json({ message: "SACCO updated", sacco });
+    } catch (error) {
+      console.error("Update SACCO error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+router.patch(
+  "/saccos/:id/toggle-status",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const sacco = await prisma.sacco.findUnique({ where: { id } });
+      if (!sacco) { res.status(404).json({ error: "SACCO not found" }); return; }
+
+      const newStatus = sacco.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+      const updated = await prisma.sacco.update({ where: { id }, data: { status: newStatus } });
+
+      await prisma.auditLog.create({
+        data: {
+          action: newStatus === "ACTIVE" ? "SACCO_ACTIVATED" : "SACCO_SUSPENDED",
+          entity: "Sacco",
+          entityId: id,
+          details: `SACCO "${sacco.name}" ${newStatus.toLowerCase()}`,
+          userId: req.user!.userId,
+          ipAddress: req.ip || req.socket.remoteAddress,
+        },
+      });
+
+      res.json({ message: `SACCO ${newStatus.toLowerCase()}`, sacco: updated });
+    } catch (error) {
+      console.error("Toggle SACCO status error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════
+//  BLACKLIST MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════
+router.get(
+  "/blacklist",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const page = Math.max(1, Number(req.query.page) || 1);
+      const limit = 20;
+      const skip = (page - 1) * limit;
+      const activeOnly = req.query.active !== "false";
+
+      const where: Record<string, unknown> = {};
+      if (activeOnly) where.isActive = true;
+
+      const [entries, total] = await Promise.all([
+        prisma.blacklistEntry.findMany({
+          where,
+          include: {
+            member: { select: { memberId: true, fullName: true, email: true, status: true } },
+            addedBy: { select: { firstName: true, lastName: true } },
+          },
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: limit,
+        }),
+        prisma.blacklistEntry.count({ where }),
+      ]);
+
+      res.json({
+        entries,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      });
+    } catch (error) {
+      console.error("Blacklist list error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+router.post(
+  "/blacklist",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { memberId, reason } = req.body;
+      if (!memberId || !reason) {
+        res.status(400).json({ error: "memberId and reason are required" });
+        return;
+      }
+
+      const member = await prisma.member.findUnique({ where: { id: memberId } });
+      if (!member) { res.status(404).json({ error: "Member not found" }); return; }
+
+      const existing = await prisma.blacklistEntry.findFirst({
+        where: { memberId, isActive: true },
+      });
+      if (existing) {
+        res.status(409).json({ error: "Member is already blacklisted" });
+        return;
+      }
+
+      const entry = await prisma.blacklistEntry.create({
+        data: { memberId, reason, addedById: req.user!.userId },
+        include: {
+          member: { select: { memberId: true, fullName: true } },
+          addedBy: { select: { firstName: true, lastName: true } },
+        },
+      });
+
+      await prisma.member.update({ where: { id: memberId }, data: { status: "FLAGGED" } });
+
+      await prisma.auditLog.create({
+        data: {
+          action: "MEMBER_BLACKLISTED",
+          entity: "BlacklistEntry",
+          entityId: entry.id,
+          details: `Member "${member.fullName}" blacklisted: ${reason}`,
+          userId: req.user!.userId,
+          ipAddress: req.ip || req.socket.remoteAddress,
+        },
+      });
+
+      res.status(201).json({ message: "Member blacklisted", entry });
+    } catch (error) {
+      console.error("Blacklist add error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+router.patch(
+  "/blacklist/:id/remove",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const entry = await prisma.blacklistEntry.findUnique({
+        where: { id },
+        include: { member: { select: { fullName: true, id: true } } },
+      });
+      if (!entry) { res.status(404).json({ error: "Blacklist entry not found" }); return; }
+
+      await prisma.blacklistEntry.update({ where: { id }, data: { isActive: false } });
+      await prisma.member.update({ where: { id: entry.memberId }, data: { status: "ACTIVE" } });
+
+      await prisma.auditLog.create({
+        data: {
+          action: "MEMBER_UNBLACKLISTED",
+          entity: "BlacklistEntry",
+          entityId: id,
+          details: `Member "${entry.member.fullName}" removed from blacklist`,
+          userId: req.user!.userId,
+          ipAddress: req.ip || req.socket.remoteAddress,
+        },
+      });
+
+      res.json({ message: "Member removed from blacklist" });
+    } catch (error) {
+      console.error("Blacklist remove error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// Search members (for blacklist member picker)
+router.get(
+  "/members-search",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const search = (req.query.q as string)?.trim() || "";
+      if (search.length < 2) { res.json({ members: [] }); return; }
+
+      const members = await prisma.member.findMany({
+        where: {
+          OR: [
+            { fullName: { contains: search, mode: "insensitive" } },
+            { memberId: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+          ],
+        },
+        select: { id: true, memberId: true, fullName: true, email: true, status: true },
+        take: 10,
+      });
+
+      res.json({ members });
+    } catch (error) {
+      console.error("Members search error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// Get officers (for SACCO officer assignment)
+router.get(
+  "/officers",
+  async (_req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const officers = await prisma.user.findMany({
+        where: { role: "OFFICER", isActive: true },
+        select: { id: true, firstName: true, lastName: true, email: true },
+        orderBy: { firstName: "asc" },
+      });
+      res.json({ officers });
+    } catch (error) {
+      console.error("Officers list error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }

@@ -14,6 +14,8 @@ import {
   Activity,
   Loader2,
   Bot,
+  Building2,
+  ShieldOff,
 } from "lucide-react";
 import { fetchAdminStats, fetchFraudAlerts } from "@/services/adminService";
 import UserManagement from "@/features/admin-dashboard/UserManagement";
@@ -25,8 +27,10 @@ import SystemConfig from "@/features/admin-dashboard/SystemConfig";
 import RoleManagement from "@/features/admin-dashboard/RoleManagement";
 import DataExports from "@/features/admin-dashboard/DataExports";
 import AutomationPanel from "@/features/admin-dashboard/AutomationPanel";
+import SaccoManagement from "@/features/admin-dashboard/SaccoManagement";
+import BlacklistManagement from "@/features/admin-dashboard/BlacklistManagement";
 
-type AdminView = "dashboard" | "users" | "fraud" | "audit" | "analytics" | "risk" | "config" | "roles" | "exports" | "automation";
+type AdminView = "dashboard" | "users" | "fraud" | "audit" | "analytics" | "risk" | "config" | "roles" | "exports" | "automation" | "saccos" | "blacklist";
 
 const viewTitles: Record<AdminView, string> = {
   dashboard: "Dashboard Overview",
@@ -39,6 +43,8 @@ const viewTitles: Record<AdminView, string> = {
   roles: "Role Management",
   exports: "Data Exports",
   automation: "Automation Engine",
+  saccos: "SACCO / Chama Management",
+  blacklist: "Blacklist Management",
 };
 
 export default function AdminDashboard() {
@@ -47,7 +53,9 @@ export default function AdminDashboard() {
   const navItems: NavItem[] = [
     { label: "Dashboard", icon: LayoutDashboard, active: activeView === "dashboard", onClick: () => setActiveView("dashboard") },
     { label: "User Management", icon: Users, active: activeView === "users", onClick: () => setActiveView("users") },
+    { label: "SACCO Management", icon: Building2, active: activeView === "saccos", onClick: () => setActiveView("saccos") },
     { label: "Fraud Alerts", icon: AlertTriangle, active: activeView === "fraud", onClick: () => setActiveView("fraud") },
+    { label: "Blacklist", icon: ShieldOff, active: activeView === "blacklist", onClick: () => setActiveView("blacklist") },
     { label: "Audit Logs", icon: FileText, active: activeView === "audit", onClick: () => setActiveView("audit") },
     { label: "Analytics", icon: BarChart3, active: activeView === "analytics", onClick: () => setActiveView("analytics") },
     { label: "Risk Policies", icon: ShieldCheck, active: activeView === "risk", onClick: () => setActiveView("risk") },
@@ -69,7 +77,9 @@ export default function AdminDashboard() {
 
       {activeView === "dashboard" && <DashboardOverview onNavigate={setActiveView} />}
       {activeView === "users" && <UserManagement />}
+      {activeView === "saccos" && <SaccoManagement />}
       {activeView === "fraud" && <FraudAlerts />}
+      {activeView === "blacklist" && <BlacklistManagement />}
       {activeView === "audit" && <AuditLogs />}
       {activeView === "analytics" && <Analytics />}
       {activeView === "risk" && <RiskPolicies />}

@@ -22,6 +22,31 @@ export async function changeUserRole(id: string, role: string) {
   return data;
 }
 
+// ─── Create User ────────────────────────────────────────────────────
+export async function createUser(userData: {
+  nationalId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  password: string;
+}) {
+  const { data } = await api.post("/api/admin/users", userData);
+  return data;
+}
+
+// ─── Reset User Password ───────────────────────────────────────────
+export async function resetUserPassword(id: string, newPassword: string) {
+  const { data } = await api.patch(`/api/admin/users/${id}/reset-password`, { newPassword });
+  return data;
+}
+
+// ─── User Login History ─────────────────────────────────────────────
+export async function fetchUserLoginHistory(id: string) {
+  const { data } = await api.get(`/api/admin/users/${id}/login-history`);
+  return data;
+}
+
 // ─── Fraud Alerts ───────────────────────────────────────────────────
 export async function fetchFraudAlerts(params?: { page?: number; severity?: string; resolved?: string }) {
   const { data } = await api.get("/api/admin/fraud-alerts", { params });
@@ -137,5 +162,57 @@ export async function toggleAutomationJob(jobName: string, enabled: boolean) {
 
 export async function fetchAutomationLogs(page = 1) {
   const { data } = await api.get("/api/admin/automation/logs", { params: { page } });
+  return data;
+}
+
+// ─── SACCO / Chama Management ───────────────────────────────────────
+export async function fetchSaccos(params?: { page?: number; search?: string }) {
+  const { data } = await api.get("/api/admin/saccos", { params });
+  return data;
+}
+
+export async function createSacco(saccoData: {
+  name: string;
+  registrationNumber: string;
+  location: string;
+  assignedOfficerId?: string;
+}) {
+  const { data } = await api.post("/api/admin/saccos", saccoData);
+  return data;
+}
+
+export async function updateSacco(id: string, updates: Record<string, unknown>) {
+  const { data } = await api.patch(`/api/admin/saccos/${id}`, updates);
+  return data;
+}
+
+export async function toggleSaccoStatus(id: string) {
+  const { data } = await api.patch(`/api/admin/saccos/${id}/toggle-status`);
+  return data;
+}
+
+// ─── Blacklist Management ───────────────────────────────────────────
+export async function fetchBlacklist(params?: { page?: number; active?: string }) {
+  const { data } = await api.get("/api/admin/blacklist", { params });
+  return data;
+}
+
+export async function addToBlacklist(memberId: string, reason: string) {
+  const { data } = await api.post("/api/admin/blacklist", { memberId, reason });
+  return data;
+}
+
+export async function removeFromBlacklist(id: string) {
+  const { data } = await api.patch(`/api/admin/blacklist/${id}/remove`);
+  return data;
+}
+
+export async function searchMembers(q: string) {
+  const { data } = await api.get("/api/admin/members-search", { params: { q } });
+  return data;
+}
+
+export async function fetchOfficers() {
+  const { data } = await api.get("/api/admin/officers");
   return data;
 }
