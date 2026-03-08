@@ -16,6 +16,9 @@ import {
   Bot,
   Building2,
   ShieldOff,
+  Shield,
+  Gauge,
+  Brain,
 } from "lucide-react";
 import { fetchAdminStats, fetchFraudAlerts } from "@/services/adminService";
 import UserManagement from "@/features/admin-dashboard/UserManagement";
@@ -29,8 +32,12 @@ import DataExports from "@/features/admin-dashboard/DataExports";
 import AutomationPanel from "@/features/admin-dashboard/AutomationPanel";
 import SaccoManagement from "@/features/admin-dashboard/SaccoManagement";
 import BlacklistManagement from "@/features/admin-dashboard/BlacklistManagement";
+import RuleEnginePage from "@/features/fraud-engine/RuleEnginePage";
+import BehaviorAnalysisPage from "@/features/fraud-engine/BehaviorAnalysisPage";
+import RiskScoringPage from "@/features/fraud-engine/RiskScoringPage";
+import DecisionLogicPage from "@/features/fraud-engine/DecisionLogicPage";
 
-type AdminView = "dashboard" | "users" | "fraud" | "audit" | "analytics" | "risk" | "config" | "roles" | "exports" | "automation" | "saccos" | "blacklist";
+type AdminView = "dashboard" | "users" | "fraud" | "audit" | "analytics" | "risk" | "config" | "roles" | "exports" | "automation" | "saccos" | "blacklist" | "rule-engine" | "behavior-analysis" | "risk-scoring" | "decision-logic";
 
 const viewTitles: Record<AdminView, string> = {
   dashboard: "Dashboard Overview",
@@ -45,6 +52,10 @@ const viewTitles: Record<AdminView, string> = {
   automation: "Automation Engine",
   saccos: "SACCO / Chama Management",
   blacklist: "Blacklist Management",
+  "rule-engine": "Rule Engine",
+  "behavior-analysis": "Behavior Analysis",
+  "risk-scoring": "Risk Scoring",
+  "decision-logic": "Decision Logic",
 };
 
 export default function AdminDashboard() {
@@ -63,6 +74,16 @@ export default function AdminDashboard() {
     { label: "Role Management", icon: UserCog, active: activeView === "roles", onClick: () => setActiveView("roles") },
     { label: "Data Exports", icon: Database, active: activeView === "exports", onClick: () => setActiveView("exports") },
     { label: "Automation", icon: Bot, active: activeView === "automation", onClick: () => setActiveView("automation") },
+    {
+      label: "Rule Engine",
+      icon: Shield,
+      children: [
+        { label: "Rules", icon: Shield, active: activeView === "rule-engine", onClick: () => setActiveView("rule-engine") },
+        { label: "Behavior Analysis", icon: Activity, active: activeView === "behavior-analysis", onClick: () => setActiveView("behavior-analysis") },
+        { label: "Risk Scoring", icon: Gauge, active: activeView === "risk-scoring", onClick: () => setActiveView("risk-scoring") },
+        { label: "Decision Logic", icon: Brain, active: activeView === "decision-logic", onClick: () => setActiveView("decision-logic") },
+      ],
+    },
   ];
 
   return (
@@ -87,6 +108,10 @@ export default function AdminDashboard() {
       {activeView === "roles" && <RoleManagement />}
       {activeView === "exports" && <DataExports />}
       {activeView === "automation" && <AutomationPanel />}
+      {activeView === "rule-engine" && <RuleEnginePage />}
+      {activeView === "behavior-analysis" && <BehaviorAnalysisPage />}
+      {activeView === "risk-scoring" && <RiskScoringPage />}
+      {activeView === "decision-logic" && <DecisionLogicPage />}
     </DashboardLayout>
   );
 }
