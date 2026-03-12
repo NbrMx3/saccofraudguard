@@ -47,26 +47,28 @@ export default function AuditorDashboard() {
   }, []);
 
   const navItems: NavItem[] = useMemo(() => [
-    { label: "Dashboard", icon: LayoutDashboard, active: currentView === "dashboard", onClick: () => setCurrentView("dashboard") },
-    { label: "Transactions", icon: ArrowRightLeft, active: currentView === "transaction-monitoring", onClick: () => setCurrentView("transaction-monitoring") },
-    { label: "Fraud Reports", icon: AlertTriangle, active: currentView === "fraud-reports", onClick: () => setCurrentView("fraud-reports") },
-    { label: "Investigations", icon: ClipboardCheck, active: currentView === "investigations", onClick: () => setCurrentView("investigations") },
-    { label: "Fraud Analytics", icon: BarChart3, active: currentView === "fraud-analytics", onClick: () => setCurrentView("fraud-analytics") },
+    { label: "Dashboard", icon: LayoutDashboard, iconColor: "text-sky-500 dark:text-sky-400", active: currentView === "dashboard", onClick: () => setCurrentView("dashboard") },
+    { label: "Transactions", icon: ArrowRightLeft, iconColor: "text-emerald-500 dark:text-emerald-400", active: currentView === "transaction-monitoring", onClick: () => setCurrentView("transaction-monitoring") },
+    { label: "Fraud Reports", icon: AlertTriangle, iconColor: "text-red-500 dark:text-red-400", active: currentView === "fraud-reports", onClick: () => setCurrentView("fraud-reports") },
+    { label: "Investigations", icon: ClipboardCheck, iconColor: "text-violet-500 dark:text-violet-400", active: currentView === "investigations", onClick: () => setCurrentView("investigations") },
+    { label: "Fraud Analytics", icon: BarChart3, iconColor: "text-fuchsia-500 dark:text-fuchsia-400", active: currentView === "fraud-analytics", onClick: () => setCurrentView("fraud-analytics") },
     {
       label: "Audit Trail",
       icon: History,
+      iconColor: "text-amber-500 dark:text-amber-400",
       children: [
-        { label: "Audit Trail", icon: History, active: currentView === "audit-trail", onClick: () => setCurrentView("audit-trail") },
-        { label: "Audit Reviews", icon: FileSearch, active: currentView === "audit-reviews", onClick: () => setCurrentView("audit-reviews") },
+        { label: "Audit Trail", icon: History, iconColor: "text-amber-500 dark:text-amber-400", active: currentView === "audit-trail", onClick: () => setCurrentView("audit-trail") },
+        { label: "Audit Reviews", icon: FileSearch, iconColor: "text-orange-500 dark:text-orange-400", active: currentView === "audit-reviews", onClick: () => setCurrentView("audit-reviews") },
       ],
     },
     {
       label: "Compliances",
       icon: Scale,
+      iconColor: "text-teal-500 dark:text-teal-400",
       children: [
-        { label: "Compliance", icon: Scale, active: currentView === "compliance", onClick: () => setCurrentView("compliance") },
-        { label: "Compliance Reports", icon: FileText, active: currentView === "compliance-reports", onClick: () => setCurrentView("compliance-reports") },
-        { label: "Export Data", icon: Download, active: currentView === "export-data", onClick: () => setCurrentView("export-data") },
+        { label: "Compliance", icon: Scale, iconColor: "text-teal-500 dark:text-teal-400", active: currentView === "compliance", onClick: () => setCurrentView("compliance") },
+        { label: "Compliance Reports", icon: FileText, iconColor: "text-indigo-500 dark:text-indigo-400", active: currentView === "compliance-reports", onClick: () => setCurrentView("compliance-reports") },
+        { label: "Export Data", icon: Download, iconColor: "text-cyan-500 dark:text-cyan-400", active: currentView === "export-data", onClick: () => setCurrentView("export-data") },
       ],
     },
   ], [currentView]);

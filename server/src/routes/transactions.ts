@@ -40,12 +40,8 @@ router.post(
       if (!member) { res.status(404).json({ error: "Member not found" }); return; }
       if (member.status === "SUSPENDED") { res.status(403).json({ error: "Cannot transact on a suspended account" }); return; }
 
-      // ── Real-time pre-screening ──────────────────────────────────
+      // ── Real-time pre-screening (advisory only — never blocks) ──
       const screening = await preScreenTransaction(memberId, "DEPOSIT", amount);
-      if (!screening.allowed) {
-        res.status(403).json({ error: "Transaction blocked", screening });
-        return;
-      }
 
       const balanceBefore = member.balance;
       const balanceAfter = balanceBefore + amount;
@@ -102,12 +98,8 @@ router.post(
       if (member.status === "SUSPENDED") { res.status(403).json({ error: "Cannot transact on a suspended account" }); return; }
       if (member.balance < amount) { res.status(400).json({ error: `Insufficient balance. Available: KES ${member.balance.toLocaleString()}` }); return; }
 
-      // ── Real-time pre-screening ──────────────────────────────────
+      // ── Real-time pre-screening (advisory only — never blocks) ──
       const screening = await preScreenTransaction(memberId, "WITHDRAWAL", amount);
-      if (!screening.allowed) {
-        res.status(403).json({ error: "Transaction blocked", screening });
-        return;
-      }
 
       const balanceBefore = member.balance;
       const balanceAfter = balanceBefore - amount;

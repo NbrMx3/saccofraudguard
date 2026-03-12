@@ -23,6 +23,7 @@ export interface NavItem {
   active?: boolean;
   onClick?: () => void;
   children?: NavItem[];
+  iconColor?: string;
 }
 
 interface DashboardLayoutProps {
@@ -167,7 +168,7 @@ export default function DashboardLayout({
                         : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     } border border-transparent`}
                   >
-                    <Icon className="h-4.5 w-4.5" />
+                    <Icon className={`h-4.5 w-4.5 ${item.iconColor || ''}`} />
                     <span className="flex-1 text-left">{item.label}</span>
                     <ChevronRight className={`h-3.5 w-3.5 transition-transform duration-200 ${
                       isExpanded ? "rotate-90" : ""
@@ -190,7 +191,7 @@ export default function DashboardLayout({
                                 : "text-muted-foreground hover:bg-accent hover:text-foreground border border-transparent"
                             }`}
                           >
-                            <ChildIcon className="h-4 w-4" />
+                            <ChildIcon className={`h-4 w-4 ${child.iconColor || ''}`} />
                             {child.label}
                           </button>
                         );
@@ -215,7 +216,7 @@ export default function DashboardLayout({
                     : "text-muted-foreground hover:bg-accent hover:text-foreground border border-transparent"
                 }`}
               >
-                <Icon className="h-4.5 w-4.5" />
+                <Icon className={`h-4.5 w-4.5 ${item.iconColor || ''}`} />
                 {item.label}
               </button>
             );

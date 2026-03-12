@@ -122,8 +122,10 @@ export async function preScreenTransaction(
   const score = riskRecord?.totalPoints ?? 0;
   const level = riskRecord?.riskLevel ?? (warnings.length > 2 ? "MEDIUM" : "LOW");
 
+  // Advisory only — never block transactions.
+  // Actual fraud detection and flagging happens post-transaction via runFraudCheck().
   return {
-    allowed: warnings.length === 0 || !requiresApproval,
+    allowed: true,
     riskLevel: level as PreScreenResult["riskLevel"],
     riskScore: score,
     warnings,
