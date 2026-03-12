@@ -47,9 +47,9 @@ export default function AuditReviewsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: Parameters<typeof fetchAuditReviews>[0] = { page, limit: 15 };
-      if (filterStatus) params!.status = filterStatus;
-      if (filterCategory) params!.category = filterCategory;
+      const params: NonNullable<Parameters<typeof fetchAuditReviews>[0]> = { page, limit: 15 };
+      if (filterStatus) params.status = filterStatus;
+      if (filterCategory) params.category = filterCategory;
       const res = await fetchAuditReviews(params);
       setReviews(res.reviews);
       setTotal(res.total);

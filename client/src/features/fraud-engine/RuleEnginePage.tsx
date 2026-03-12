@@ -315,9 +315,9 @@ function ViolationsTab() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: Parameters<typeof fetchRuleViolations>[0] = { page, limit: 15 };
-      if (filter === "unreviewed") params!.reviewed = "false";
-      if (filter === "reviewed") params!.reviewed = "true";
+      const params: NonNullable<Parameters<typeof fetchRuleViolations>[0]> = { page, limit: 15 };
+      if (filter === "unreviewed") params.reviewed = "false";
+      if (filter === "reviewed") params.reviewed = "true";
       const res = await fetchRuleViolations(params);
       setViolations(res.violations);
       setTotal(res.total);
@@ -533,8 +533,8 @@ function WithdrawalRequestsTab() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: Parameters<typeof fetchWithdrawalRequests>[0] = { page, limit: 15 };
-      if (filter) params!.status = filter;
+      const params: NonNullable<Parameters<typeof fetchWithdrawalRequests>[0]> = { page, limit: 15 };
+      if (filter) params.status = filter;
       const res = await fetchWithdrawalRequests(params);
       setRequests(res.requests);
       setTotal(res.total);
