@@ -46,20 +46,21 @@ router.post(
       const balanceBefore = member.balance;
       const balanceAfter = balanceBefore + amount;
 
-      const transaction = await prisma.transaction.create({
-        data: {
-          txRef: generateTxRef("DEPOSIT"),
-          type: "DEPOSIT",
-          amount,
-          balanceBefore,
-          balanceAfter,
-          description: description || "Cash deposit",
-          memberId,
-          processedById: req.user!.userId,
-        },
-      });
-
-      await prisma.member.update({ where: { id: memberId }, data: { balance: balanceAfter } });
+      const [transaction] = await prisma.$transaction([
+        prisma.transaction.create({
+          data: {
+            txRef: generateTxRef("DEPOSIT"),
+            type: "DEPOSIT",
+            amount,
+            balanceBefore,
+            balanceAfter,
+            description: description || "Cash deposit",
+            memberId,
+            processedById: req.user!.userId,
+          },
+        }),
+        prisma.member.update({ where: { id: memberId }, data: { balance: balanceAfter } }),
+      ]);
 
       // Real-time post-transaction fraud check
       const fraudResult = await runFraudCheck(memberId, transaction.id, "DEPOSIT", amount);
@@ -104,20 +105,21 @@ router.post(
       const balanceBefore = member.balance;
       const balanceAfter = balanceBefore - amount;
 
-      const transaction = await prisma.transaction.create({
-        data: {
-          txRef: generateTxRef("WITHDRAWAL"),
-          type: "WITHDRAWAL",
-          amount,
-          balanceBefore,
-          balanceAfter,
-          description: description || "Cash withdrawal",
-          memberId,
-          processedById: req.user!.userId,
-        },
-      });
-
-      await prisma.member.update({ where: { id: memberId }, data: { balance: balanceAfter } });
+      const [transaction] = await prisma.$transaction([
+        prisma.transaction.create({
+          data: {
+            txRef: generateTxRef("WITHDRAWAL"),
+            type: "WITHDRAWAL",
+            amount,
+            balanceBefore,
+            balanceAfter,
+            description: description || "Cash withdrawal",
+            memberId,
+            processedById: req.user!.userId,
+          },
+        }),
+        prisma.member.update({ where: { id: memberId }, data: { balance: balanceAfter } }),
+      ]);
 
       const fraudResult = await runFraudCheck(memberId, transaction.id, "WITHDRAWAL", amount);
 
@@ -147,6 +149,15 @@ router.post(
 
       if (!memberId || !amount || amount <= 0 || !interestRate || !termMonths) {
         res.status(400).json({ error: "Member ID, amount, interest rate and term are required" });
+        return;
+      }
+
+      if (interestRate < 0 || interestRate > 100) {
+        res.status(400).json({ error: "Interest rate must be between 0 and 100" });
+        return;
+      }
+      if (termMonths < 1 || termMonths > 360) {
+        res.status(400).json({ error: "Loan term must be between 1 and 360 months" });
         return;
       }
 
@@ -184,28 +195,27 @@ router.post(
         },
       });
 
-      // Disburse loan to member balance
+      // Disburse loan to member balance (atomic)
       const balanceBefore = member.balance;
       const balanceAfter = balanceBefore + amount;
 
-      const transaction = await prisma.transaction.create({
-        data: {
-          txRef: generateTxRef("LOAN_DISBURSEMENT"),
-          type: "LOAN_DISBURSEMENT",
-          amount,
-          balanceBefore,
-          balanceAfter,
-          description: `Loan disbursement — ${loan.loanRef}`,
-          memberId,
-          processedById: req.user!.userId,
-          loanId: loan.id,
-        },
-      });
-
-      await prisma.member.update({ where: { id: memberId }, data: { balance: balanceAfter } });
-
-      // Update loan status to active
-      await prisma.loan.update({ where: { id: loan.id }, data: { status: "ACTIVE" } });
+      const [transaction] = await prisma.$transaction([
+        prisma.transaction.create({
+          data: {
+            txRef: generateTxRef("LOAN_DISBURSEMENT"),
+            type: "LOAN_DISBURSEMENT",
+            amount,
+            balanceBefore,
+            balanceAfter,
+            description: `Loan disbursement — ${loan.loanRef}`,
+            memberId,
+            processedById: req.user!.userId,
+            loanId: loan.id,
+          },
+        }),
+        prisma.member.update({ where: { id: memberId }, data: { balance: balanceAfter } }),
+        prisma.loan.update({ where: { id: loan.id }, data: { status: "ACTIVE" } }),
+      ]);
 
       const fraudResult = await runFraudCheck(memberId, transaction.id, "LOAN_DISBURSEMENT", amount);
 
@@ -258,30 +268,30 @@ router.post(
       const newOutstanding = loan.outstandingBalance - repayAmount;
       const newTotalRepaid = loan.totalRepaid + repayAmount;
 
-      const transaction = await prisma.transaction.create({
-        data: {
-          txRef: generateTxRef("LOAN_REPAYMENT"),
-          type: "LOAN_REPAYMENT",
-          amount: repayAmount,
-          balanceBefore,
-          balanceAfter,
-          description: `Loan repayment — ${loan.loanRef}`,
-          memberId: member.id,
-          processedById: req.user!.userId,
-          loanId: loan.id,
-        },
-      });
-
-      await prisma.member.update({ where: { id: member.id }, data: { balance: balanceAfter } });
-
-      await prisma.loan.update({
-        where: { id: loan.id },
-        data: {
-          outstandingBalance: newOutstanding,
-          totalRepaid: newTotalRepaid,
-          status: newOutstanding <= 0 ? "COMPLETED" : "ACTIVE",
-        },
-      });
+      const [transaction] = await prisma.$transaction([
+        prisma.transaction.create({
+          data: {
+            txRef: generateTxRef("LOAN_REPAYMENT"),
+            type: "LOAN_REPAYMENT",
+            amount: repayAmount,
+            balanceBefore,
+            balanceAfter,
+            description: `Loan repayment — ${loan.loanRef}`,
+            memberId: member.id,
+            processedById: req.user!.userId,
+            loanId: loan.id,
+          },
+        }),
+        prisma.member.update({ where: { id: member.id }, data: { balance: balanceAfter } }),
+        prisma.loan.update({
+          where: { id: loan.id },
+          data: {
+            outstandingBalance: newOutstanding,
+            totalRepaid: newTotalRepaid,
+            status: newOutstanding <= 0 ? "COMPLETED" : "ACTIVE",
+          },
+        }),
+      ]);
 
       const fraudResult = await runFraudCheck(member.id, transaction.id, "LOAN_REPAYMENT", repayAmount);
 

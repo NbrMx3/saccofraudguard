@@ -868,43 +868,40 @@ router.post("/transfer", async (req: AuthRequest, res: Response): Promise<void> 
     const rand1 = Math.random().toString(36).substring(2, 8).toUpperCase();
     const rand2 = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    // Withdrawal from sender
+    // Atomic transfer — all DB ops succeed or none do
     const senderBalBefore = sender.balance;
     const senderBalAfter = senderBalBefore - amount;
-    const withdrawalTx = await prisma.transaction.create({
-      data: {
-        txRef: `TRF-${dateStr}-${rand1}`,
-        type: "WITHDRAWAL",
-        amount,
-        balanceBefore: senderBalBefore,
-        balanceAfter: senderBalAfter,
-        description: description || `Transfer to ${receiver.fullName} (${receiver.memberId})`,
-        memberId: fromMemberId,
-        processedById: req.user!.userId,
-      },
-    });
-
-    // Deposit to receiver
     const receiverBalBefore = receiver.balance;
     const receiverBalAfter = receiverBalBefore + amount;
-    const depositTx = await prisma.transaction.create({
-      data: {
-        txRef: `TRF-${dateStr}-${rand2}`,
-        type: "DEPOSIT",
-        amount,
-        balanceBefore: receiverBalBefore,
-        balanceAfter: receiverBalAfter,
-        description: description || `Transfer from ${sender.fullName} (${sender.memberId})`,
-        memberId: toMemberId,
-        processedById: req.user!.userId,
-      },
-    });
 
-    // Update balances
-    await Promise.all([
+    const [withdrawalTx, depositTx] = await prisma.$transaction([
+      prisma.transaction.create({
+        data: {
+          txRef: `TRF-${dateStr}-${rand1}`,
+          type: "WITHDRAWAL",
+          amount,
+          balanceBefore: senderBalBefore,
+          balanceAfter: senderBalAfter,
+          description: description || `Transfer to ${receiver.fullName} (${receiver.memberId})`,
+          memberId: fromMemberId,
+          processedById: req.user!.userId,
+        },
+      }),
+      prisma.transaction.create({
+        data: {
+          txRef: `TRF-${dateStr}-${rand2}`,
+          type: "DEPOSIT",
+          amount,
+          balanceBefore: receiverBalBefore,
+          balanceAfter: receiverBalAfter,
+          description: description || `Transfer from ${sender.fullName} (${sender.memberId})`,
+          memberId: toMemberId,
+          processedById: req.user!.userId,
+        },
+      }),
       prisma.member.update({ where: { id: fromMemberId }, data: { balance: senderBalAfter } }),
       prisma.member.update({ where: { id: toMemberId }, data: { balance: receiverBalAfter } }),
-    ]);
+    ]).then(([createdWithdrawalTx, createdDepositTx]) => [createdWithdrawalTx, createdDepositTx] as const);
 
     // Run fraud checks on both
     const fraudResult = await runFraudCheck(fromMemberId, withdrawalTx.id, "WITHDRAWAL", amount);

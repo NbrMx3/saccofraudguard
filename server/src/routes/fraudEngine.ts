@@ -175,6 +175,18 @@ router.get("/rules", async (_req: AuthRequest, res: Response) => {
 router.post("/rules", async (req: AuthRequest, res: Response) => {
   try {
     const { name, description, ruleType, maxCount, windowHours, minAmount, maxAmount, severity, riskPoints, enabled } = req.body;
+
+    if (!name || !description) {
+      res.status(400).json({ error: "Name and description are required" });
+      return;
+    }
+
+    const validRuleTypes = ["FREQUENCY", "AMOUNT", "NO_DEPOSIT", "VELOCITY", "TEMPORAL", "CUSTOM"];
+    if (ruleType && !validRuleTypes.includes(ruleType)) {
+      res.status(400).json({ error: `Invalid rule type. Must be one of: ${validRuleTypes.join(", ")}` });
+      return;
+    }
+
     const rule = await prisma.fraudRule.create({
       data: {
         name,
