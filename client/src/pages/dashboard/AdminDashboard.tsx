@@ -253,7 +253,7 @@ function DashboardOverview({ onNavigate }: { onNavigate: (v: AdminView) => void 
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-foreground truncate">{alert.description}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {alert.member?.fullName} — {new Date(alert.createdAt).toLocaleDateString()}
+                      {alert.member?.fullName} — {alert.createdAt ? new Date(alert.createdAt).toLocaleDateString() : ""}
                     </p>
                   </div>
                 </div>

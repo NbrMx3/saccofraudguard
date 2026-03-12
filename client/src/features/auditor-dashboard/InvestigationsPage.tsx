@@ -19,9 +19,11 @@ const priorityColors: Record<string, string> = {
 };
 
 type MemberTransaction = { id: string; txRef: string; type: string; amount: number; status: string };
-type MemberFraudAlert = { id: string; severity: string; type: string; resolved: boolean; resolvedAt?: string };
+type MemberFraudAlert = { id: string; severity: string; type: string; resolved: boolean; resolvedAt?: string; description?: string };
 
 interface MemberActivityData {
+  member: { fullName: string; memberId: string; status: string; balance?: number; createdAt: string };
+  riskScore?: { riskLevel: string; totalScore: number };
   recentTransactions?: MemberTransaction[];
   fraudAlerts?: MemberFraudAlert[];
 }
