@@ -36,7 +36,7 @@ export default function ComplianceReportsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { page, limit: 15 };
+      const params: Parameters<typeof fetchComplianceReports>[0] = { page, limit: 15 };
       if (filterStatus) params.status = filterStatus;
       if (filterCategory) params.category = filterCategory;
       const res = await fetchComplianceReports(params);
@@ -73,7 +73,7 @@ export default function ComplianceReportsPage() {
   const handleUpdate = async (id: string) => {
     setSaving(true);
     try {
-      const body: any = {};
+      const body: Parameters<typeof updateComplianceReport>[1] = {};
       if (editTitle) body.title = editTitle;
       if (editSummary) body.summary = editSummary;
       if (editContent) body.content = editContent;

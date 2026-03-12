@@ -3,6 +3,7 @@ import { useNavigate, Link } from "@tanstack/react-router";
 import { useAuth } from "@/context/AuthContext";
 import { Shield, Eye, EyeOff, UserPlus, Loader2, Check, X } from "lucide-react";
 import { toast } from "sonner";
+import { getApiError } from "@/lib/utils";
 import CyberBackground from "@/components/ui/CyberBackground";
 import FloatingIcons from "@/components/ui/FloatingIcons";
 
@@ -41,8 +42,8 @@ export default function SignupPage() {
       const msg = await signup(form);
       toast.success(msg);
       navigate({ to: "/login" });
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Signup failed");
+    } catch (err: unknown) {
+      toast.error(getApiError(err, "Signup failed"));
     } finally {
       setLoading(false);
     }

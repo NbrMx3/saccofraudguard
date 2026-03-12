@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { fetchUsers, toggleUserActive, changeUserRole, createUser, resetUserPassword, fetchUserLoginHistory } from "@/services/adminService";
 import { Search, UserCog, Ban, CheckCircle, ChevronLeft, ChevronRight, Plus, X, KeyRound, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { getApiError } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -30,7 +31,7 @@ export default function UserManagement() {
   const [newPassword, setNewPassword] = useState("");
   const [resetting, setResetting] = useState(false);
   const [historyModal, setHistoryModal] = useState<{ id: string; name: string } | null>(null);
-  const [loginHistory, setLoginHistory] = useState<any[]>([]);
+  const [loginHistory, setLoginHistory] = useState<{ action: string; createdAt: string; ipAddress?: string }[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
   const load = useCallback(async () => {
@@ -82,8 +83,8 @@ export default function UserManagement() {
       setShowCreateForm(false);
       setCreateForm({ nationalId: "", email: "", firstName: "", lastName: "", role: "OFFICER", password: "" });
       load();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to create user");
+    } catch (err: unknown) {
+      toast.error(getApiError(err, "Failed to create user"));
     } finally {
       setCreating(false);
     }
@@ -101,8 +102,8 @@ export default function UserManagement() {
       toast.success("Password reset successfully");
       setResetModal(null);
       setNewPassword("");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to reset password");
+    } catch (err: unknown) {
+      toast.error(getApiError(err, "Failed to reset password"));
     } finally {
       setResetting(false);
     }
@@ -372,7 +373,7 @@ export default function UserManagement() {
               <p className="text-sm text-muted-foreground text-center py-8">No login history found</p>
             ) : (
               <div className="max-h-80 overflow-auto space-y-2">
-                {loginHistory.map((entry: any, i: number) => (
+                {loginHistory.map((entry, i: number) => (
                   <div key={i} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3">
                     <div className={`h-2 w-2 rounded-full shrink-0 ${
                       entry.action === "LOGIN" || entry.action === "LOGIN_SUCCESS" ? "bg-emerald-400" : entry.action === "LOGOUT" ? "bg-slate-400" : "bg-red-400"

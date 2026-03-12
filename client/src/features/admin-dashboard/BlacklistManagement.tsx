@@ -16,6 +16,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getApiError } from "@/lib/utils";
 
 interface BlacklistEntry {
   id: string;
@@ -95,8 +96,8 @@ export default function BlacklistManagement() {
       setReason("");
       setMemberSearch("");
       load();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to blacklist member");
+    } catch (err: unknown) {
+      toast.error(getApiError(err, "Failed to blacklist member"));
     } finally {
       setSubmitting(false);
     }

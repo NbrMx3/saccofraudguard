@@ -156,7 +156,7 @@ function RulesTab() {
 
   const handleToggle = async (rule: FraudRule) => {
     try {
-      await updateFraudRule(rule.id, { enabled: !rule.enabled } as any);
+      await updateFraudRule(rule.id, { enabled: !rule.enabled });
       toast.success(rule.enabled ? "Rule disabled" : "Rule enabled");
       load();
     } catch {
@@ -315,9 +315,9 @@ function ViolationsTab() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { page, limit: 15 };
-      if (filter === "unreviewed") params.reviewed = "false";
-      if (filter === "reviewed") params.reviewed = "true";
+      const params: Parameters<typeof fetchRuleViolations>[0] = { page, limit: 15 };
+      if (filter === "unreviewed") params!.reviewed = "false";
+      if (filter === "reviewed") params!.reviewed = "true";
       const res = await fetchRuleViolations(params);
       setViolations(res.violations);
       setTotal(res.total);
@@ -456,7 +456,7 @@ function ThresholdsTab() {
         maxWithdrawalsPerDay: parseInt(maxPerDay),
         requireApprovalAbove: parseFloat(approvalAbove),
       });
-      setThreshold(result as any);
+      setThreshold(result);
       toast.success("Thresholds updated");
     } catch {
       toast.error("Failed to save thresholds");
@@ -533,8 +533,8 @@ function WithdrawalRequestsTab() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { page, limit: 15 };
-      if (filter) params.status = filter;
+      const params: Parameters<typeof fetchWithdrawalRequests>[0] = { page, limit: 15 };
+      if (filter) params!.status = filter;
       const res = await fetchWithdrawalRequests(params);
       setRequests(res.requests);
       setTotal(res.total);

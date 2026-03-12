@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getApiError } from "@/lib/utils";
 
 const categoryOptions = [
   { value: "general", label: "General" },
@@ -114,8 +115,8 @@ export default function DocumentUploadPage() {
       setDocCategory("general");
       if (fileRef.current) fileRef.current.value = "";
       load();
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Upload failed");
+    } catch (err: unknown) {
+      toast.error(getApiError(err, "Upload failed"));
     } finally {
       setUploading(false);
     }
