@@ -58,6 +58,14 @@ const viewTitles: Record<AdminView, string> = {
   "decision-logic": "Decision Logic",
 };
 
+type FraudAlertSummary = {
+  id: string;
+  severity?: string;
+  description?: string;
+  createdAt?: string;
+  member?: { fullName?: string };
+};
+
 export default function AdminDashboard() {
   const [activeView, setActiveView] = useState<AdminView>("dashboard");
 
@@ -120,7 +128,7 @@ export default function AdminDashboard() {
 // ─── Dashboard Overview (with live data) ────────────────────────────────
 function DashboardOverview({ onNavigate }: { onNavigate: (v: AdminView) => void }) {
   const [stats, setStats] = useState<Record<string, number> | null>(null);
-  const [recentAlerts, setRecentAlerts] = useState<any[]>([]);
+  const [recentAlerts, setRecentAlerts] = useState<FraudAlertSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -228,7 +236,7 @@ function DashboardOverview({ onNavigate }: { onNavigate: (v: AdminView) => void 
             {recentAlerts.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-4">No unresolved alerts</p>
             ) : (
-              recentAlerts.map((alert: any) => (
+              recentAlerts.map((alert: FraudAlertSummary) => (
                 <div
                   key={alert.id}
                   className="flex items-start gap-3 rounded-xl border border-border bg-background p-3"

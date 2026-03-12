@@ -65,7 +65,7 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
       await markAllNotificationsRead();
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
-    } catch {}
+    } catch { /* intentionally empty */ }
   };
 
   const handleMarkRead = async (id: string) => {
@@ -73,7 +73,7 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
       await markNotificationRead(id);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch {}
+    } catch { /* intentionally empty */ }
   };
 
   return (

@@ -3,6 +3,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useMemo,
   type ReactNode,
 } from "react";
 
@@ -29,8 +30,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return (localStorage.getItem("sfg-theme") as Theme) || "system";
   });
 
-  const [resolvedTheme, setResolved] = useState<"light" | "dark">(() =>
-    theme === "system" ? getSystemTheme() : theme
+  const [systemTheme, setSystemTheme] = useState<"light" | "dark">(getSystemTheme);
+
+  const resolvedTheme = useMemo<"light" | "dark">(
+    () => (theme === "system" ? systemTheme : theme),
+    [theme, systemTheme]
   );
 
   const setTheme = (t: Theme) => {
@@ -39,23 +43,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const resolved = theme === "system" ? getSystemTheme() : theme;
-    setResolved(resolved);
-
     const root = document.documentElement;
     root.classList.remove("light", "dark");
-    root.classList.add(resolved);
-  }, [theme]);
+    root.classList.add(resolvedTheme);
+  }, [resolvedTheme]);
 
   // Listen for system theme changes
   useEffect(() => {
     if (theme !== "system") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = (e: MediaQueryListEvent) => {
-      const t = e.matches ? "dark" : "light";
-      setResolved(t);
-      document.documentElement.classList.remove("light", "dark");
-      document.documentElement.classList.add(t);
+      setSystemTheme(e.matches ? "dark" : "light");
     };
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
@@ -68,6 +66,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTheme() {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error("useTheme must be used within ThemeProvider");

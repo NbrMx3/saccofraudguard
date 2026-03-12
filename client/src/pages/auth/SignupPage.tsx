@@ -5,6 +5,7 @@ import { Shield, Eye, EyeOff, UserPlus, Loader2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import CyberBackground from "@/components/ui/CyberBackground";
 import FloatingIcons from "@/components/ui/FloatingIcons";
+import { getApiErrorMessage } from "@/lib/utils";
 
 const passwordRules = [
   { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
@@ -41,8 +42,8 @@ export default function SignupPage() {
       const msg = await signup(form);
       toast.success(msg);
       navigate({ to: "/login" });
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Signup failed");
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Signup failed"));
     } finally {
       setLoading(false);
     }

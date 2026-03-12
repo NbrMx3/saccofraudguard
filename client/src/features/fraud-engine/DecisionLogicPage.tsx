@@ -59,12 +59,12 @@ export default function DecisionLogicPage() {
   const [showEvaluate, setShowEvaluate] = useState(false);
   const [evalMemberId, setEvalMemberId] = useState("");
   const [evaluating, setEvaluating] = useState(false);
-  const [evalResult, setEvalResult] = useState<{ riskScore: any; decisions: FraudDecision[] } | null>(null);
+  const [evalResult, setEvalResult] = useState<{ riskScore: { riskLevel: string; totalPoints: number }; decisions: FraudDecision[] } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { page, limit: 15 };
+      const params: Record<string, string | number | boolean | undefined> = { page, limit: 15 };
       if (filterAction) params.action = filterAction;
       if (filterApproval) params.requiresApproval = filterApproval;
       const [decRes, statsRes] = await Promise.all([
@@ -170,7 +170,7 @@ export default function DecisionLogicPage() {
                   <span className="text-xs text-muted-foreground">{evalResult.decisions.length} decision(s) generated</span>
                 </div>
                 <div className="space-y-2">
-                  {evalResult.decisions.map((d: any, i: number) => {
+                  {evalResult.decisions.map((d: FraudDecision, i: number) => {
                     const Icon = actionIcons[d.action] || ShieldCheck;
                     return (
                       <div key={i} className="flex items-center gap-2 text-xs">

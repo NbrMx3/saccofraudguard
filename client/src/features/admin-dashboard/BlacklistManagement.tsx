@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { getApiErrorMessage } from "@/lib/utils";
 import {
   fetchBlacklist,
   addToBlacklist,
@@ -95,8 +96,8 @@ export default function BlacklistManagement() {
       setReason("");
       setMemberSearch("");
       load();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to blacklist member");
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Failed to blacklist member"));
     } finally {
       setSubmitting(false);
     }

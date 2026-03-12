@@ -10,11 +10,9 @@ import {
   Phone,
   Eye,
   X,
-  TrendingUp,
   Activity,
   ShieldAlert,
   ShieldCheck,
-  Clock,
   Landmark,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -262,11 +260,12 @@ function MemberRiskDetailModal({ memberId, onClose }: { memberId: string; onClos
   const [detailTab, setDetailTab] = useState<"alerts" | "transactions" | "loans">("alerts");
 
   useEffect(() => {
-    setLoading(true);
+    let cancelled = false;
     fetchMemberRiskDetail(memberId)
-      .then(setData)
-      .catch(() => toast.error("Failed to load member details"))
-      .finally(() => setLoading(false));
+      .then((d) => { if (!cancelled) setData(d); })
+      .catch(() => { if (!cancelled) toast.error("Failed to load member details"); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [memberId]);
 
   return (
