@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/context/AuthContext";
 import { Shield, Mail, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { getApiError } from "@/lib/utils";
 import CyberBackground from "@/components/ui/CyberBackground";
 import FloatingIcons from "@/components/ui/FloatingIcons";
 
@@ -20,8 +21,8 @@ export default function ForgotPasswordPage() {
       const msg = await forgotPassword(nationalId, email);
       toast.success(msg);
       setSent(true);
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Request failed");
+    } catch (err: unknown) {
+      toast.error(getApiError(err, "Request failed"));
     } finally {
       setLoading(false);
     }

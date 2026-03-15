@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getApiError } from "@/lib/utils";
 
 const statusColors: Record<string, string> = {
   OPEN: "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -103,8 +104,8 @@ export default function CaseInvestigationPage() {
       setNewPriority("MEDIUM");
       setNewAlertId("");
       load();
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to create case");
+    } catch (err: unknown) {
+      toast.error(getApiError(err, "Failed to create case"));
     } finally {
       setCreating(false);
     }

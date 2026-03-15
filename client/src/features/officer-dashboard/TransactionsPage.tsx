@@ -138,8 +138,8 @@ function MemberSearch({ selectedId, onSelect }: { selectedId: string; onSelect: 
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (query.length < 2) { setResults([]); return; }
     const t = setTimeout(async () => {
+      if (query.length < 2) { setResults([]); return; }
       try {
         const { members } = await fetchMembers(1, query);
         setResults(members);

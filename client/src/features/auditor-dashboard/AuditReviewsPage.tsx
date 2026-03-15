@@ -47,7 +47,7 @@ export default function AuditReviewsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { page, limit: 15 };
+      const params: NonNullable<Parameters<typeof fetchAuditReviews>[0]> = { page, limit: 15 };
       if (filterStatus) params.status = filterStatus;
       if (filterCategory) params.category = filterCategory;
       const res = await fetchAuditReviews(params);
@@ -81,7 +81,7 @@ export default function AuditReviewsPage() {
   const handleUpdate = async (id: string) => {
     setSaving(true);
     try {
-      const body: any = {};
+      const body: Parameters<typeof updateAuditReview>[1] = {};
       if (editStatus) body.status = editStatus;
       if (editFindings) body.findings = editFindings;
       if (editRecommendations) body.recommendations = editRecommendations;

@@ -19,6 +19,7 @@ import {
   Edit3,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getApiError } from "@/lib/utils";
 
 interface Officer {
   id: string;
@@ -121,8 +122,8 @@ export default function SaccoManagement() {
       }
       setShowForm(false);
       load();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to save SACCO");
+    } catch (err: unknown) {
+      toast.error(getApiError(err, "Failed to save SACCO"));
     } finally {
       setSubmitting(false);
     }

@@ -27,6 +27,7 @@ import {
   toggleAutomationJob,
   fetchAutomationLogs,
 } from "@/services/adminService";
+import { getApiError } from "@/lib/utils";
 
 // ── Types ────────────────────────────────────────────────────────
 interface JobState {
@@ -177,9 +178,9 @@ export default function AutomationPanel() {
         description: result.result,
       });
       await Promise.all([loadStatus(), loadLogs()]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Failed to trigger ${jobName}`, {
-        description: err?.response?.data?.error || err.message,
+        description: getApiError(err, "Unknown error"),
       });
     } finally {
       setTriggeringJob(null);
@@ -194,9 +195,9 @@ export default function AutomationPanel() {
         `${JOB_META[jobName]?.label || jobName} ${!currentEnabled ? "enabled" : "disabled"}`
       );
       await loadStatus();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("Failed to toggle job", {
-        description: err?.response?.data?.error || err.message,
+        description: getApiError(err, "Unknown error"),
       });
     } finally {
       setTogglingJob(null);

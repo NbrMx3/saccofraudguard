@@ -32,7 +32,7 @@ export default function AuditTrailPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { page, limit: 30 };
+      const params: Parameters<typeof fetchAuditTrail>[0] = { page, limit: 30 };
       if (filterEntity) params.entity = filterEntity;
       if (searchAction) params.action = searchAction;
       const res = await fetchAuditTrail(params);

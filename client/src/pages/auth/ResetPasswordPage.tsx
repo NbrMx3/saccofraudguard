@@ -3,6 +3,7 @@ import { useNavigate, Link, useSearch } from "@tanstack/react-router";
 import { useAuth } from "@/context/AuthContext";
 import { Shield, Eye, EyeOff, Loader2, Check, X, KeyRound } from "lucide-react";
 import { toast } from "sonner";
+import { getApiError } from "@/lib/utils";
 import CyberBackground from "@/components/ui/CyberBackground";
 import FloatingIcons from "@/components/ui/FloatingIcons";
 
@@ -41,8 +42,8 @@ export default function ResetPasswordPage() {
       const msg = await resetPassword(token, password, confirmPassword);
       toast.success(msg);
       navigate({ to: "/login" });
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Reset failed");
+    } catch (err: unknown) {
+      toast.error(getApiError(err, "Reset failed"));
     } finally {
       setLoading(false);
     }

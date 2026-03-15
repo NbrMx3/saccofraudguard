@@ -23,7 +23,7 @@ export default function FraudReportsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { page, limit: 20 };
+      const params: Parameters<typeof fetchFraudReports>[0] = { page, limit: 20 };
       if (filterSeverity) params.severity = filterSeverity;
       if (filterResolved) params.resolved = filterResolved;
       const res = await fetchFraudReports(params);

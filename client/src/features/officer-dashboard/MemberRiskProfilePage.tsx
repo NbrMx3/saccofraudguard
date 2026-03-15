@@ -10,11 +10,9 @@ import {
   Phone,
   Eye,
   X,
-  TrendingUp,
   Activity,
   ShieldAlert,
   ShieldCheck,
-  Clock,
   Landmark,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -262,6 +260,7 @@ function MemberRiskDetailModal({ memberId, onClose }: { memberId: string; onClos
   const [detailTab, setDetailTab] = useState<"alerts" | "transactions" | "loans">("alerts");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     fetchMemberRiskDetail(memberId)
       .then(setData)

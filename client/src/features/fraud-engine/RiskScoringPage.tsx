@@ -50,7 +50,7 @@ export default function RiskScoringPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { page, limit: 15 };
+      const params: Parameters<typeof fetchRiskScores>[0] = { page, limit: 15 };
       if (filterRisk) params.riskLevel = filterRisk;
       const res = await fetchRiskScores(params);
       setScores(res.scores);
