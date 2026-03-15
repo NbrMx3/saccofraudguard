@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { getApiErrorMessage } from "@/lib/utils";
 import {
   Bot,
   Play,
@@ -177,9 +178,9 @@ export default function AutomationPanel() {
         description: result.result,
       });
       await Promise.all([loadStatus(), loadLogs()]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Failed to trigger ${jobName}`, {
-        description: err?.response?.data?.error || err.message,
+        description: getApiErrorMessage(err),
       });
     } finally {
       setTriggeringJob(null);
@@ -194,9 +195,9 @@ export default function AutomationPanel() {
         `${JOB_META[jobName]?.label || jobName} ${!currentEnabled ? "enabled" : "disabled"}`
       );
       await loadStatus();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("Failed to toggle job", {
-        description: err?.response?.data?.error || err.message,
+        description: getApiErrorMessage(err),
       });
     } finally {
       setTogglingJob(null);

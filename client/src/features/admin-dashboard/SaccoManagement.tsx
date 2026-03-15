@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { getApiErrorMessage } from "@/lib/utils";
 import {
   fetchSaccos,
   createSacco,
@@ -121,8 +122,8 @@ export default function SaccoManagement() {
       }
       setShowForm(false);
       load();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to save SACCO");
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Failed to save SACCO"));
     } finally {
       setSubmitting(false);
     }

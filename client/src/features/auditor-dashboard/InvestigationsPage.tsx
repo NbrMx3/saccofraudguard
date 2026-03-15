@@ -18,6 +18,16 @@ const priorityColors: Record<string, string> = {
   CRITICAL: "text-red-400",
 };
 
+type MemberTransaction = { id: string; txRef: string; type: string; amount: number; status: string };
+type MemberFraudAlert = { id: string; severity: string; type: string; resolved: boolean; resolvedAt?: string; description?: string };
+
+interface MemberActivityData {
+  member: { fullName: string; memberId: string; status: string; balance?: number; createdAt: string };
+  riskScore?: { riskLevel: string; totalScore: number };
+  recentTransactions?: MemberTransaction[];
+  fraudAlerts?: MemberFraudAlert[];
+}
+
 export default function InvestigationsPage() {
   const [cases, setCases] = useState<Investigation[]>([]);
   const [total, setTotal] = useState(0);
@@ -40,13 +50,13 @@ export default function InvestigationsPage() {
   const [editResolution, setEditResolution] = useState("");
 
   // Member activity modal
-  const [memberActivity, setMemberActivity] = useState<any>(null);
+  const [memberActivity, setMemberActivity] = useState<MemberActivityData | null>(null);
   const [activityLoading, setActivityLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { page, limit: 15 };
+      const params: Record<string, string | number | boolean | undefined> = { page, limit: 15 };
       if (filterStatus) params.status = filterStatus;
       if (filterPriority) params.priority = filterPriority;
       const res = await fetchInvestigations(params);
@@ -80,7 +90,7 @@ export default function InvestigationsPage() {
   const handleUpdate = async (id: string) => {
     setSaving(true);
     try {
-      const body: any = {};
+      const body: Record<string, string | undefined> = {};
       if (editStatus) body.status = editStatus;
       if (editFindings) body.findings = editFindings;
       if (editResolution) body.resolution = editResolution;
@@ -326,7 +336,7 @@ export default function InvestigationsPage() {
                     <ArrowRightLeft className="h-4 w-4 text-sky-400" /> Recent Transactions
                   </h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {memberActivity.recentTransactions?.map((tx: any) => (
+                    {memberActivity.recentTransactions?.map((tx: MemberTransaction) => (
                       <div key={tx.id} className="flex items-center justify-between rounded-lg border border-border bg-background p-2.5 text-xs">
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-muted-foreground">{tx.txRef}</span>
@@ -352,7 +362,7 @@ export default function InvestigationsPage() {
                     <AlertTriangle className="h-4 w-4 text-amber-400" /> Fraud Alerts
                   </h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {memberActivity.fraudAlerts?.map((a: any) => (
+                    {memberActivity.fraudAlerts?.map((a: MemberFraudAlert) => (
                       <div key={a.id} className="rounded-lg border border-border bg-background p-2.5 text-xs">
                         <div className="flex items-center gap-2 mb-1">
                           <span className={`px-1.5 py-0.5 rounded text-[10px] border ${severityColor(a.severity)}`}>{a.severity}</span>

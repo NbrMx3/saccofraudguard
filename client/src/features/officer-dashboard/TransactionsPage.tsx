@@ -138,6 +138,7 @@ function MemberSearch({ selectedId, onSelect }: { selectedId: string; onSelect: 
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (query.length < 2) { setResults([]); return; }
     const t = setTimeout(async () => {
       try {

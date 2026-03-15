@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type React from "react";
 import { fetchFraudAnalytics, type FraudAnalyticsData } from "@/services/auditorService";
 import {
   BarChart3,
@@ -258,7 +259,7 @@ export default function FraudAnalyticsPage() {
   );
 }
 
-function StatBox({ label, value, icon: Icon, color }: { label: string; value: string | number; icon: any; color: string }) {
+function StatBox({ label, value, icon: Icon, color }: { label: string; value: string | number; icon: React.ComponentType<{ className?: string }>; color: string }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
       <div className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${color} mb-3`}>

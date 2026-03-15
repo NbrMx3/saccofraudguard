@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { fetchUsers, changeUserRole } from "@/services/adminService";
 import { UserCog, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -55,8 +56,8 @@ export default function RoleManagement() {
       await changeUserRole(userId, newRole);
       toast.success("Role updated successfully");
       load();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Failed to change role");
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Failed to change role"));
     }
   };
 

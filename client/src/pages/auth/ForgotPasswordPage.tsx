@@ -5,6 +5,7 @@ import { Shield, Mail, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import CyberBackground from "@/components/ui/CyberBackground";
 import FloatingIcons from "@/components/ui/FloatingIcons";
+import { getApiErrorMessage } from "@/lib/utils";
 
 export default function ForgotPasswordPage() {
   const { forgotPassword } = useAuth();
@@ -20,8 +21,8 @@ export default function ForgotPasswordPage() {
       const msg = await forgotPassword(nationalId, email);
       toast.success(msg);
       setSent(true);
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Request failed");
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Request failed"));
     } finally {
       setLoading(false);
     }

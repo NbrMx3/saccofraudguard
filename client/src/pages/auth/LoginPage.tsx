@@ -5,6 +5,7 @@ import { Shield, Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import CyberBackground from "@/components/ui/CyberBackground";
 import FloatingIcons from "@/components/ui/FloatingIcons";
+import { getApiErrorMessage } from "@/lib/utils";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -21,8 +22,8 @@ export default function LoginPage() {
       await login(nationalId, password);
       toast.success("Login successful");
       navigate({ to: "/dashboard" });
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Login failed");
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Login failed"));
     } finally {
       setLoading(false);
     }
