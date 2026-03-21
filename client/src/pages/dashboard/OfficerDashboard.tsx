@@ -141,13 +141,17 @@ export default function OfficerDashboard() {
                   Transaction Monitoring
                 </h3>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <TrendingUp className="h-3.5 w-3.5" />
+                  <span className="flex h-6 w-6 items-center justify-center rounded-md border border-emerald-500/25 bg-emerald-500/10">
+                    <TrendingUp className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-400" />
+                  </span>
                   Weekly overview
                 </div>
               </div>
               <div className="flex h-64 items-center justify-center rounded-xl border border-dashed border-border bg-accent/30">
                 <div className="text-center text-muted-foreground">
-                  <BarChart3 className="mx-auto h-10 w-10 mb-2 opacity-50" />
+                  <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl border border-violet-500/25 bg-violet-500/10">
+                    <BarChart3 className="h-6 w-6 text-violet-500 dark:text-violet-400" />
+                  </div>
                   <p className="text-sm">Transaction volume chart</p>
                   <p className="text-xs">Monitoring flagged vs approved</p>
                 </div>

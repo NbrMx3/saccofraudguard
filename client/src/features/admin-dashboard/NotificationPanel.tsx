@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchNotifications, markAllNotificationsRead, markNotificationRead } from "@/services/adminService";
 import { Bell, Check, CheckCheck, Info, AlertTriangle, XCircle, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 
 interface Notification {
   id: string;
@@ -65,7 +66,9 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
       await markAllNotificationsRead();
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
-    } catch {}
+    } catch {
+      toast.error("Failed to mark notifications as read");
+    }
   };
 
   const handleMarkRead = async (id: string) => {
@@ -73,7 +76,9 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
       await markNotificationRead(id);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch {}
+    } catch {
+      toast.error("Failed to update notification");
+    }
   };
 
   return (

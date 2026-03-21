@@ -33,6 +33,36 @@ interface DashboardLayoutProps {
   roleBadgeColor: string;
 }
 
+function getIconBadgeClasses(iconColor?: string, isActive = false) {
+  const base = "flex h-7 w-7 items-center justify-center rounded-lg border transition-colors";
+  const activeSuffix = isActive ? " shadow-sm" : "";
+
+  if (!iconColor) {
+    return `${base} ${isActive ? "bg-sky-500/15 border-sky-500/30" : "bg-accent border-border"}${activeSuffix}`;
+  }
+
+  const color = iconColor.toLowerCase();
+  if (color.includes("sky")) return `${base} ${isActive ? "bg-sky-500/20 border-sky-500/35" : "bg-sky-500/10 border-sky-500/20"}${activeSuffix}`;
+  if (color.includes("blue")) return `${base} ${isActive ? "bg-blue-500/20 border-blue-500/35" : "bg-blue-500/10 border-blue-500/20"}${activeSuffix}`;
+  if (color.includes("indigo")) return `${base} ${isActive ? "bg-indigo-500/20 border-indigo-500/35" : "bg-indigo-500/10 border-indigo-500/20"}${activeSuffix}`;
+  if (color.includes("violet")) return `${base} ${isActive ? "bg-violet-500/20 border-violet-500/35" : "bg-violet-500/10 border-violet-500/20"}${activeSuffix}`;
+  if (color.includes("fuchsia")) return `${base} ${isActive ? "bg-fuchsia-500/20 border-fuchsia-500/35" : "bg-fuchsia-500/10 border-fuchsia-500/20"}${activeSuffix}`;
+  if (color.includes("pink")) return `${base} ${isActive ? "bg-pink-500/20 border-pink-500/35" : "bg-pink-500/10 border-pink-500/20"}${activeSuffix}`;
+  if (color.includes("red")) return `${base} ${isActive ? "bg-red-500/20 border-red-500/35" : "bg-red-500/10 border-red-500/20"}${activeSuffix}`;
+  if (color.includes("rose")) return `${base} ${isActive ? "bg-rose-500/20 border-rose-500/35" : "bg-rose-500/10 border-rose-500/20"}${activeSuffix}`;
+  if (color.includes("orange")) return `${base} ${isActive ? "bg-orange-500/20 border-orange-500/35" : "bg-orange-500/10 border-orange-500/20"}${activeSuffix}`;
+  if (color.includes("amber")) return `${base} ${isActive ? "bg-amber-500/20 border-amber-500/35" : "bg-amber-500/10 border-amber-500/20"}${activeSuffix}`;
+  if (color.includes("yellow")) return `${base} ${isActive ? "bg-yellow-500/20 border-yellow-500/35" : "bg-yellow-500/10 border-yellow-500/20"}${activeSuffix}`;
+  if (color.includes("lime")) return `${base} ${isActive ? "bg-lime-500/20 border-lime-500/35" : "bg-lime-500/10 border-lime-500/20"}${activeSuffix}`;
+  if (color.includes("emerald")) return `${base} ${isActive ? "bg-emerald-500/20 border-emerald-500/35" : "bg-emerald-500/10 border-emerald-500/20"}${activeSuffix}`;
+  if (color.includes("green")) return `${base} ${isActive ? "bg-green-500/20 border-green-500/35" : "bg-green-500/10 border-green-500/20"}${activeSuffix}`;
+  if (color.includes("teal")) return `${base} ${isActive ? "bg-teal-500/20 border-teal-500/35" : "bg-teal-500/10 border-teal-500/20"}${activeSuffix}`;
+  if (color.includes("cyan")) return `${base} ${isActive ? "bg-cyan-500/20 border-cyan-500/35" : "bg-cyan-500/10 border-cyan-500/20"}${activeSuffix}`;
+  if (color.includes("slate")) return `${base} ${isActive ? "bg-slate-500/20 border-slate-500/35" : "bg-slate-500/10 border-slate-500/20"}${activeSuffix}`;
+
+  return `${base} ${isActive ? "bg-sky-500/15 border-sky-500/30" : "bg-accent border-border"}${activeSuffix}`;
+}
+
 export default function DashboardLayout({
   children,
   navItems,
@@ -158,6 +188,7 @@ export default function DashboardLayout({
             if (item.children && item.children.length > 0) {
               const isExpanded = expandedGroups.has(item.label);
               const hasActiveChild = item.children.some((c) => c.active);
+              const parentBadgeClasses = getIconBadgeClasses(item.iconColor, hasActiveChild);
               return (
                 <div key={item.label} className="space-y-0.5">
                   <button
@@ -168,7 +199,9 @@ export default function DashboardLayout({
                         : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     } border border-transparent`}
                   >
-                    <Icon className={`h-4.5 w-4.5 ${item.iconColor || ''}`} />
+                    <span className={parentBadgeClasses}>
+                      <Icon className={`h-4.5 w-4.5 ${item.iconColor || ""}`} />
+                    </span>
                     <span className="flex-1 text-left">{item.label}</span>
                     <ChevronRight className={`h-3.5 w-3.5 transition-transform duration-200 ${
                       isExpanded ? "rotate-90" : ""
@@ -178,6 +211,7 @@ export default function DashboardLayout({
                     <div className="ml-4 border-l border-border pl-2 space-y-0.5">
                       {item.children.map((child) => {
                         const ChildIcon = child.icon;
+                        const childBadgeClasses = getIconBadgeClasses(child.iconColor, !!child.active);
                         return (
                           <button
                             key={child.label}
@@ -191,7 +225,9 @@ export default function DashboardLayout({
                                 : "text-muted-foreground hover:bg-accent hover:text-foreground border border-transparent"
                             }`}
                           >
-                            <ChildIcon className={`h-4 w-4 ${child.iconColor || ''}`} />
+                            <span className={`${childBadgeClasses} h-6 w-6 rounded-md`}>
+                              <ChildIcon className={`h-4 w-4 ${child.iconColor || ""}`} />
+                            </span>
                             {child.label}
                           </button>
                         );
@@ -203,6 +239,7 @@ export default function DashboardLayout({
             }
 
             // Regular nav item
+            const itemBadgeClasses = getIconBadgeClasses(item.iconColor, !!item.active);
             return (
               <button
                 key={item.label}
@@ -216,7 +253,9 @@ export default function DashboardLayout({
                     : "text-muted-foreground hover:bg-accent hover:text-foreground border border-transparent"
                 }`}
               >
-                <Icon className={`h-4.5 w-4.5 ${item.iconColor || ''}`} />
+                <span className={itemBadgeClasses}>
+                  <Icon className={`h-4.5 w-4.5 ${item.iconColor || ""}`} />
+                </span>
                 {item.label}
               </button>
             );

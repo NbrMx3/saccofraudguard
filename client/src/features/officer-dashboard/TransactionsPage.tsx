@@ -649,9 +649,9 @@ function TransactionHistoryTable({ refreshKey }: { refreshKey: number }) {
     } finally {
       setLoading(false);
     }
-  }, [page, typeFilter, statusFilter, searchMemberId, refreshKey]);
+  }, [page, typeFilter, statusFilter, searchMemberId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, [load, refreshKey]);
 
   const typeColors: Record<TransactionType, string> = {
     DEPOSIT: "bg-emerald-500/10 text-emerald-400",

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "prisma db push --accept-data-loss && prisma generate && tsc",
+    "build": "tsc",
     "start": "node dist/index.js",
     "migrate": "prisma db push --accept-data-loss",
     "seed": "tsx prisma/seed.ts",
