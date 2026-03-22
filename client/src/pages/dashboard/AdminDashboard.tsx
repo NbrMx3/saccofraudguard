@@ -80,9 +80,9 @@ export default function AdminDashboard() {
       iconColor: "text-orange-500 dark:text-orange-400",
       children: [
         { label: "Rules", icon: Shield, iconColor: "text-orange-500 dark:text-orange-400", active: activeView === "rule-engine", onClick: () => setActiveView("rule-engine") },
-        { label: "Behavior Analysis", icon: Activity, iconColor: "text-pink-500 dark:text-pink-400", active: activeView === "behavior-analysis", onClick: () => setActiveView("behavior-analysis") },
-        { label: "Risk Scoring", icon: Gauge, iconColor: "text-yellow-500 dark:text-yellow-400", active: activeView === "risk-scoring", onClick: () => setActiveView("risk-scoring") },
-        { label: "Decision Logic", icon: Brain, iconColor: "text-lime-500 dark:text-lime-400", active: activeView === "decision-logic", onClick: () => setActiveView("decision-logic") },
+        { label: "Behavior Analysis", icon: Activity, iconColor: "text-cyan-500 dark:text-cyan-400", active: activeView === "behavior-analysis", onClick: () => setActiveView("behavior-analysis") },
+        { label: "Risk Scoring", icon: Gauge, iconColor: "text-indigo-500 dark:text-indigo-400", active: activeView === "risk-scoring", onClick: () => setActiveView("risk-scoring") },
+        { label: "Decision Logic", icon: Brain, iconColor: "text-emerald-500 dark:text-emerald-400", active: activeView === "decision-logic", onClick: () => setActiveView("decision-logic") },
       ],
     },
   ];

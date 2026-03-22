@@ -51,7 +51,7 @@ export default function AuditorDashboard() {
     { label: "Transactions", icon: ArrowRightLeft, iconColor: "text-emerald-500 dark:text-emerald-400", active: currentView === "transaction-monitoring", onClick: () => setCurrentView("transaction-monitoring") },
     { label: "Fraud Reports", icon: AlertTriangle, iconColor: "text-red-500 dark:text-red-400", active: currentView === "fraud-reports", onClick: () => setCurrentView("fraud-reports") },
     { label: "Investigations", icon: ClipboardCheck, iconColor: "text-violet-500 dark:text-violet-400", active: currentView === "investigations", onClick: () => setCurrentView("investigations") },
-    { label: "Fraud Analytics", icon: BarChart3, iconColor: "text-fuchsia-500 dark:text-fuchsia-400", active: currentView === "fraud-analytics", onClick: () => setCurrentView("fraud-analytics") },
+    { label: "Fraud Analytics", icon: BarChart3, iconColor: "text-indigo-500 dark:text-indigo-400", active: currentView === "fraud-analytics", onClick: () => setCurrentView("fraud-analytics") },
     {
       label: "Audit Trail",
       icon: History,
