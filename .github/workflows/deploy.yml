@@ -1,23 +1,28 @@
 name: Deploy
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # ── Deploy Client to Vercel ────────────────────────────────
   deploy-client:
-    name: Deploy Client → Vercel
+    name: Deploy client
     runs-on: ubuntu-latest
-    needs: [] # runs immediately; CI is a separate status check
-    if: github.event_name == 'push'
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     defaults:
       run:
         working-directory: client
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
       - uses: actions/checkout@v4
@@ -39,22 +44,28 @@ jobs:
         run: pnpm build
 
       - name: Deploy to Vercel
+        if: ${{ env.VERCEL_TOKEN != '' && env.VERCEL_ORG_ID != '' && env.VERCEL_PROJECT_ID != '' }}
         uses: amondnet/vercel-action@v25
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-token: ${{ env.VERCEL_TOKEN }}
+          vercel-org-id: ${{ env.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ env.VERCEL_PROJECT_ID }}
           working-directory: client
           vercel-args: --prod
 
-  # ── Deploy Server to Render / Railway (generic) ───────────
+      - name: Skip Vercel deploy
+        if: ${{ env.VERCEL_TOKEN == '' || env.VERCEL_ORG_ID == '' || env.VERCEL_PROJECT_ID == '' }}
+        run: echo "Vercel secrets are not configured; skipping client deployment."
+
   deploy-server:
-    name: Deploy Server
+    name: Deploy server
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     defaults:
       run:
         working-directory: server
+    env:
+      RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
 
     steps:
       - uses: actions/checkout@v4
@@ -72,11 +83,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma & Build
-        run: |
-          pnpm exec prisma generate
-          pnpm exec tsc
+      - name: Generate Prisma client
+        run: pnpm exec prisma generate
+
+      - name: Build
+        run: pnpm build
 
       - name: Deploy via Render hook
-        if: ${{ secrets.RENDER_DEPLOY_HOOK != '' }}
-        run: curl -s "${{ secrets.RENDER_DEPLOY_HOOK }}"
+        if: ${{ env.RENDER_DEPLOY_HOOK != '' }}
+        run: curl -fsS "$RENDER_DEPLOY_HOOK"
+
+      - name: Skip Render deploy
+        if: ${{ env.RENDER_DEPLOY_HOOK == '' }}
+        run: echo "RENDER_DEPLOY_HOOK is not configured; skipping server deployment."

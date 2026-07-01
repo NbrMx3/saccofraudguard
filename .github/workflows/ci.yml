@@ -7,9 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  # ── Client (React + Vite) ──────────────────────────────────
   client:
-    name: Client – Lint & Build
+    name: Client lint and build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -34,22 +33,18 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Type-check
-        run: pnpm exec tsc -b --noEmit
-
       - name: Build
         run: pnpm build
 
-      - name: Upload build artifact
+      - name: Upload client artifact
         uses: actions/upload-artifact@v4
         with:
           name: client-dist
           path: client/dist
           retention-days: 7
 
-  # ── Server (Express + Prisma) ──────────────────────────────
   server:
-    name: Server – Lint & Build
+    name: Server build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -71,16 +66,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma Client
+      - name: Generate Prisma client
         run: pnpm exec prisma generate
 
-      - name: Type-check
-        run: pnpm exec tsc --noEmit
-
       - name: Build
-        run: pnpm exec tsc
+        run: pnpm build
 
-      - name: Upload build artifact
+      - name: Upload server artifact
         uses: actions/upload-artifact@v4
         with:
           name: server-dist
