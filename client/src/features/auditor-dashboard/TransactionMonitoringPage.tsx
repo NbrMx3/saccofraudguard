@@ -42,7 +42,7 @@ interface AuditorTransaction {
   status: TransactionStatus;
   createdAt: string;
   member: { id: string; memberId: string; fullName: string; status: string };
-  processedBy: { firstName: string; lastName: string };
+  processedBy: { firstName: string; lastName: string } | null;
 }
 
 interface TransactionDetail extends AuditorTransaction {
@@ -55,7 +55,7 @@ interface TransactionDetail extends AuditorTransaction {
     status: string;
     balance: number;
   };
-  processedBy: { firstName: string; lastName: string; email: string };
+  processedBy: { firstName: string; lastName: string; email: string } | null;
   loan: { loanRef: string; amount: number; outstandingBalance: number; status: string } | null;
   fraudAlerts: {
     id: string;
@@ -137,6 +137,14 @@ function formatDate(dateStr: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatProcessorName(processedBy: { firstName: string; lastName: string } | null): string {
+  if (!processedBy) return "System";
+  const first = processedBy.firstName ?? "";
+  const last = processedBy.lastName ?? "";
+  const full = `${first} ${last}`.trim();
+  return full || "System";
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -467,7 +475,7 @@ export default function TransactionMonitoringPage() {
                     </td>
                     <td className="px-4 py-3">{statusBadge(tx.status)}</td>
                     <td className="px-4 py-3 text-xs text-slate-400">
-                      {tx.processedBy.firstName} {tx.processedBy.lastName}
+                      {formatProcessorName(tx.processedBy)}
                     </td>
                     <td className="px-4 py-3 text-[11px] text-slate-500 whitespace-nowrap">
                       {formatDate(tx.createdAt)}
@@ -602,8 +610,8 @@ export default function TransactionMonitoringPage() {
                 <div className="rounded-xl border border-slate-800 bg-slate-800/30 p-4 mb-4">
                   <h4 className="text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wider">Processed By</h4>
                   <div className="grid grid-cols-2 gap-3">
-                    <InfoRow label="Officer">{selectedTx.processedBy.firstName} {selectedTx.processedBy.lastName}</InfoRow>
-                    <InfoRow label="Email">{selectedTx.processedBy.email}</InfoRow>
+                    <InfoRow label="Officer">{formatProcessorName(selectedTx.processedBy)}</InfoRow>
+                    <InfoRow label="Email">{selectedTx.processedBy?.email ?? "N/A"}</InfoRow>
                   </div>
                 </div>
 
