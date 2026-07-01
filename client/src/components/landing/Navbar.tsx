@@ -69,7 +69,7 @@ export default function Navbar() {
               to="/login"
               className="rounded-xl px-5 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:text-white"
             >
-              Admin Login
+              Enter Portal
             </Link>
             <Link
               to="/signup"
@@ -121,7 +121,7 @@ export default function Navbar() {
               to="/login"
               className="rounded-xl border border-white/10 px-4 py-2.5 text-center text-sm font-medium text-slate-300 hover:text-white hover:border-white/20 transition-colors"
             >
-              Admin Login
+              Enter Portal
             </Link>
             <Link
               to="/signup"

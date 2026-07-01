@@ -77,7 +77,7 @@ export default function HeroSection() {
                 className="group inline-flex items-center justify-center gap-2.5 rounded-2xl border border-cyan-400/20 bg-white/5 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:border-cyan-400/40 hover:bg-white/10 active:scale-[0.98]"
               >
                 <Shield className="h-4.5 w-4.5 text-cyan-400" />
-                Admin Login
+                Enter Portal
               </Link>
             </div>
 
