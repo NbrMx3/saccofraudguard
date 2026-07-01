@@ -108,6 +108,16 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
 
     const user = await withRetry(() => prisma.user.findUnique({
       where: { nationalId },
+      select: {
+        id: true,
+        nationalId: true,
+        email: true,
+        password: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+      },
     }));
 
     if (!user || user.password === "PENDING_REGISTRATION") {
@@ -126,17 +136,18 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Update last login
-    await withRetry(() => prisma.user.update({
-      where: { id: user.id },
-      data: { lastLogin: new Date() },
-    }));
-
     // Create JWT
     const token = signToken({
       userId: user.id,
       nationalId: user.nationalId,
       role: user.role,
+    });
+
+    void withRetry(() => prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() },
+    })).catch((error) => {
+      console.error("Last login update failed:", error);
     });
 
     // Set httpOnly cookie (fallback)
