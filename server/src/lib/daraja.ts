@@ -3,6 +3,7 @@ interface StkPushInput {
   amount: number;
   accountReference: string;
   transactionDesc: string;
+  localTransactionId?: string;
 }
 
 interface StkPushResult {
@@ -13,6 +14,8 @@ interface StkPushResult {
   merchantRequestId?: string;
   responseCode?: string;
 }
+
+const checkoutToTransaction = new Map<string, string>();
 
 function getTimestamp(): string {
   const now = new Date();
@@ -144,6 +147,10 @@ export async function initiateStkPush(input: StkPushInput): Promise<StkPushResul
     }
 
     const success = responseBody.ResponseCode === "0";
+    if (success && responseBody.CheckoutRequestID && input.localTransactionId) {
+      checkoutToTransaction.set(responseBody.CheckoutRequestID, input.localTransactionId);
+    }
+
     return {
       attempted: true,
       success,
@@ -160,4 +167,12 @@ export async function initiateStkPush(input: StkPushInput): Promise<StkPushResul
       message: "Daraja STK push failed due to a network or configuration error",
     };
   }
+}
+
+export function consumeTransactionIdForCheckout(checkoutRequestId: string): string | null {
+  const localTransactionId = checkoutToTransaction.get(checkoutRequestId) || null;
+  if (localTransactionId) {
+    checkoutToTransaction.delete(checkoutRequestId);
+  }
+  return localTransactionId;
 }

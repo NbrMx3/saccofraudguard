@@ -10,6 +10,7 @@ import officerRouter from "./routes/officer.js";
 import auditorRouter from "./routes/auditor.js";
 import fraudEngineRouter from "./routes/fraudEngine.js";
 import notificationsRouter from "./routes/notifications.js";
+import paymentsRouter from "./routes/payments.js";
 import { startAutomation } from "./automation/scheduler.js";
 
 dotenv.config();
@@ -66,6 +67,7 @@ app.use("/api/officer", officerRouter);
 app.use("/api/auditor", auditorRouter);
 app.use("/api/fraud-engine", fraudEngineRouter);
 app.use("/api/notifications", notificationsRouter);
+app.use("/api/payments", paymentsRouter);
 
 // Health check
 app.get("/health", (_req: Request, res: Response) => {

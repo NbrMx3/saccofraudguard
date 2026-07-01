@@ -68,9 +68,17 @@ router.post(
       const stkPush = await initiateStkPush({
         phoneNumber: member.phoneNumber,
         amount,
-        accountReference: member.memberId,
+        accountReference: transaction.txRef,
         transactionDesc: `Deposit ${transaction.txRef}`,
+        localTransactionId: transaction.id,
       });
+
+      if (stkPush.success) {
+        await prisma.transaction.update({
+          where: { id: transaction.id },
+          data: { status: "PENDING" },
+        });
+      }
 
       res.status(201).json({
         message: "Deposit recorded successfully",
@@ -305,9 +313,17 @@ router.post(
       const stkPush = await initiateStkPush({
         phoneNumber: member.phoneNumber,
         amount: repayAmount,
-        accountReference: member.memberId,
+        accountReference: transaction.txRef,
         transactionDesc: `Loan repayment ${loan.loanRef}`,
+        localTransactionId: transaction.id,
       });
+
+      if (stkPush.success) {
+        await prisma.transaction.update({
+          where: { id: transaction.id },
+          data: { status: "PENDING" },
+        });
+      }
 
       res.status(201).json({
         message: newOutstanding <= 0 ? "Loan fully repaid!" : "Repayment recorded successfully",
