@@ -2,6 +2,7 @@ import express, { type Response } from "express";
 import prisma from "../lib/prisma.js";
 import { authenticate, authorize, type AuthRequest } from "../middleware/auth.js";
 import { runFraudCheck, preScreenTransaction } from "../utils/fraudCheck.js";
+import { initiateStkPush } from "../lib/daraja.js";
 
 const router: express.Router = express.Router();
 
@@ -64,12 +65,19 @@ router.post(
 
       // Real-time post-transaction fraud check
       const fraudResult = await runFraudCheck(memberId, transaction.id, "DEPOSIT", amount);
+      const stkPush = await initiateStkPush({
+        phoneNumber: member.phoneNumber,
+        amount,
+        accountReference: member.memberId,
+        transactionDesc: `Deposit ${transaction.txRef}`,
+      });
 
       res.status(201).json({
         message: "Deposit recorded successfully",
         transaction: { ...transaction, balanceAfter },
         fraudCheck: fraudResult,
         screening,
+        stkPush,
       });
     } catch (error) {
       console.error("Deposit error:", error);
@@ -294,12 +302,19 @@ router.post(
       ]);
 
       const fraudResult = await runFraudCheck(member.id, transaction.id, "LOAN_REPAYMENT", repayAmount);
+      const stkPush = await initiateStkPush({
+        phoneNumber: member.phoneNumber,
+        amount: repayAmount,
+        accountReference: member.memberId,
+        transactionDesc: `Loan repayment ${loan.loanRef}`,
+      });
 
       res.status(201).json({
         message: newOutstanding <= 0 ? "Loan fully repaid!" : "Repayment recorded successfully",
         transaction: { ...transaction, balanceAfter },
         loan: { outstandingBalance: newOutstanding, totalRepaid: newTotalRepaid, status: newOutstanding <= 0 ? "COMPLETED" : "ACTIVE" },
         fraudCheck: fraudResult,
+        stkPush,
       });
     } catch (error) {
       console.error("Loan repayment error:", error);
