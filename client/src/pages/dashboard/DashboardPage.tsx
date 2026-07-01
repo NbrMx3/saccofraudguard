@@ -1,6 +1,5 @@
 import { useAuth } from "@/context/AuthContext";
-import { useNavigate } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
 const AdminDashboard = lazy(() => import("./AdminDashboard"));
@@ -17,13 +16,6 @@ function DashboardLoader() {
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!isLoading && !user) {
-      navigate({ to: "/login" });
-    }
-  }, [user, isLoading, navigate]);
 
   if (isLoading) {
     return <DashboardLoader />;

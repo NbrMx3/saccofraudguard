@@ -1,6 +1,6 @@
 import { type Request, type Response, type NextFunction } from "express";
 import { verifyToken } from "../lib/jwt.js";
-import prisma from "../lib/prisma.js";
+import prisma, { withRetry } from "../lib/prisma.js";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -10,11 +10,11 @@ export interface AuthRequest extends Request {
   };
 }
 
-export function authenticate(
+export async function authenticate(
   req: AuthRequest,
   res: Response,
   next: NextFunction
-): void {
+): Promise<void> {
   // Check Authorization header first, then fall back to cookie
   let token: string | undefined;
   const authHeader = req.headers.authorization;
@@ -29,12 +29,44 @@ export function authenticate(
     return;
   }
 
+  let payload: AuthRequest["user"];
   try {
-    const payload = verifyToken(token);
-    req.user = payload;
-    next();
+    payload = verifyToken(token);
   } catch {
     res.status(401).json({ error: "Invalid or expired token" });
+    return;
+  }
+
+  try {
+    const user = await withRetry(() => prisma.user.findUnique({
+      where: { id: payload!.userId },
+      select: {
+        id: true,
+        nationalId: true,
+        role: true,
+        isActive: true,
+      },
+    }));
+
+    if (!user) {
+      res.status(401).json({ error: "Invalid or expired token" });
+      return;
+    }
+
+    if (!user.isActive) {
+      res.status(403).json({ error: "Account has been deactivated" });
+      return;
+    }
+
+    req.user = {
+      userId: user.id,
+      nationalId: user.nationalId,
+      role: user.role,
+    };
+    next();
+  } catch (error) {
+    console.error("Authentication lookup error:", error);
+    res.status(500).json({ error: "Authentication failed" });
   }
 }
 
