@@ -75,7 +75,7 @@ export interface AuditTrailEntry {
   entityId: string | null;
   details: string | null;
   ipAddress: string | null;
-  user: { firstName: string; lastName: string; role: string; nationalId: string };
+  user: { firstName: string; lastName: string; role: string; nationalId: string } | null;
   createdAt: string;
 }
 

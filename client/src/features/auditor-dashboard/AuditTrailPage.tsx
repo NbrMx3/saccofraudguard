@@ -119,9 +119,15 @@ export default function AuditTrailPage() {
                       </div>
                       <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                         <User className="h-3 w-3" />
-                        <span>{log.user.firstName} {log.user.lastName}</span>
-                        <span className="bg-accent px-1.5 py-0.5 rounded text-[10px]">{log.user.role}</span>
-                        <span className="font-mono text-[10px]">{log.user.nationalId}</span>
+                        <span>{log.user ? `${log.user.firstName} ${log.user.lastName}` : "System"}</span>
+                        {log.user ? (
+                          <>
+                            <span className="bg-accent px-1.5 py-0.5 rounded text-[10px]">{log.user.role}</span>
+                            <span className="font-mono text-[10px]">{log.user.nationalId}</span>
+                          </>
+                        ) : (
+                          <span className="bg-accent px-1.5 py-0.5 rounded text-[10px]">N/A</span>
+                        )}
                       </div>
                     </div>
                   </div>
