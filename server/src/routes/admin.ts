@@ -1038,6 +1038,7 @@ router.get(
         where.OR = [
           { name: { contains: search, mode: "insensitive" } },
           { registrationNumber: { contains: search, mode: "insensitive" } },
+          { institutionId: { contains: search, mode: "insensitive" } },
           { location: { contains: search, mode: "insensitive" } },
         ];
       }
@@ -1094,7 +1095,7 @@ router.post(
           action: "SACCO_CREATED",
           entity: "Sacco",
           entityId: sacco.id,
-          details: `SACCO "${name}" registered`,
+          details: `SACCO "${name}" registered with institution ID ${sacco.institutionId}`,
           userId: req.user!.userId,
           ipAddress: req.ip || req.socket.remoteAddress,
         },
@@ -1172,6 +1173,68 @@ router.patch(
       res.json({ message: `SACCO ${newStatus.toLowerCase()}`, sacco: updated });
     } catch (error) {
       console.error("Toggle SACCO status error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+router.get(
+  "/chamas",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const page = Math.max(1, Number(req.query.page) || 1);
+      const limit = 20;
+      const skip = (page - 1) * limit;
+      const search = (req.query.search as string)?.trim() || "";
+      const where = search
+        ? { OR: [
+            { name: { contains: search, mode: "insensitive" as const } },
+            { registrationNumber: { contains: search, mode: "insensitive" as const } },
+            { institutionId: { contains: search, mode: "insensitive" as const } },
+          ] }
+        : {};
+      const [chamas, total] = await Promise.all([
+        prisma.chama.findMany({
+          where,
+          include: { assignedOfficer: { select: { id: true, firstName: true, lastName: true } } },
+          orderBy: { createdAt: "desc" }, skip, take: limit,
+        }),
+        prisma.chama.count({ where }),
+      ]);
+      res.json({ chamas, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } });
+    } catch (error) {
+      console.error("List chamas error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+router.post(
+  "/chamas",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { name, registrationNumber, location, assignedOfficerId } = req.body;
+      if (!name || !registrationNumber || !location) {
+        res.status(400).json({ error: "name, registrationNumber, and location are required" });
+        return;
+      }
+      const existing = await prisma.chama.findFirst({ where: { OR: [{ name }, { registrationNumber }] } });
+      if (existing) {
+        res.status(409).json({ error: "A chama with that name or registration number already exists" });
+        return;
+      }
+      const chama = await prisma.chama.create({
+        data: { name, registrationNumber, location, assignedOfficerId: assignedOfficerId || null },
+        include: { assignedOfficer: { select: { id: true, firstName: true, lastName: true } } },
+      });
+      await prisma.auditLog.create({ data: {
+        action: "CHAMA_CREATED", entity: "Chama", entityId: chama.id,
+        details: `Chama "${name}" registered with institution ID ${chama.institutionId}`,
+        userId: req.user!.userId, ipAddress: req.ip || req.socket.remoteAddress,
+      } });
+      res.status(201).json({ message: "Chama registered", chama });
+    } catch (error) {
+      console.error("Create chama error:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }

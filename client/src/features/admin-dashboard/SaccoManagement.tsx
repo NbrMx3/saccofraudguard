@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import {
   fetchSaccos,
   createSacco,
+  createChama,
+  fetchChamas,
   updateSacco,
   toggleSaccoStatus,
   fetchOfficers,
@@ -29,6 +31,7 @@ interface Officer {
 
 interface Sacco {
   id: string;
+  institutionId: string;
   name: string;
   registrationNumber: string;
   location: string;
@@ -41,11 +44,13 @@ interface Sacco {
 
 export default function SaccoManagement() {
   const [saccos, setSaccos] = useState<Sacco[]>([]);
+  const [chamas, setChamas] = useState<Sacco[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [showForm, setShowForm] = useState(false);
+  const [formKind, setFormKind] = useState<"SACCO" | "CHAMA">("SACCO");
   const [editingSacco, setEditingSacco] = useState<Sacco | null>(null);
   const [officers, setOfficers] = useState<Officer[]>([]);
   const [form, setForm] = useState({ name: "", registrationNumber: "", location: "", assignedOfficerId: "" });
@@ -54,9 +59,13 @@ export default function SaccoManagement() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchSaccos({ page, search });
-      setSaccos(data.saccos);
-      setTotalPages(data.pagination.totalPages);
+      const [saccoData, chamaData] = await Promise.all([
+        fetchSaccos({ page, search }),
+        fetchChamas({ page, search }),
+      ]);
+      setSaccos(saccoData.saccos);
+      setChamas(chamaData.chamas);
+      setTotalPages(Math.max(saccoData.pagination.totalPages, chamaData.pagination.totalPages));
     } catch {
       toast.error("Failed to load SACCOs");
     } finally {
@@ -75,8 +84,9 @@ export default function SaccoManagement() {
     }
   };
 
-  const openCreate = () => {
+  const openCreate = (kind: "SACCO" | "CHAMA" = "SACCO") => {
     setEditingSacco(null);
+    setFormKind(kind);
     setForm({ name: "", registrationNumber: "", location: "", assignedOfficerId: "" });
     loadOfficers();
     setShowForm(true);
@@ -84,6 +94,7 @@ export default function SaccoManagement() {
 
   const openEdit = (sacco: Sacco) => {
     setEditingSacco(sacco);
+    setFormKind("SACCO");
     setForm({
       name: sacco.name,
       registrationNumber: sacco.registrationNumber,
@@ -111,13 +122,19 @@ export default function SaccoManagement() {
         });
         toast.success("SACCO updated");
       } else {
-        await createSacco({
+        const payload = {
           name: form.name,
           registrationNumber: form.registrationNumber,
           location: form.location,
           assignedOfficerId: form.assignedOfficerId || undefined,
-        });
-        toast.success("SACCO registered");
+        };
+        if (formKind === "CHAMA") {
+          await createChama(payload);
+          toast.success("Chama registered");
+        } else {
+          await createSacco(payload);
+          toast.success("SACCO registered");
+        }
       }
       setShowForm(false);
       load();
@@ -164,6 +181,12 @@ export default function SaccoManagement() {
         >
           <Plus className="h-4 w-4" /> Register SACCO
         </button>
+        <button
+          onClick={() => openCreate("CHAMA")}
+          className="flex items-center gap-2 rounded-xl border border-sky-500/40 px-4 py-2.5 text-sm font-medium text-sky-500 hover:bg-sky-500/10 transition-colors"
+        >
+          <Plus className="h-4 w-4" /> Register Chama
+        </button>
       </div>
 
       {/* Table */}
@@ -172,16 +195,16 @@ export default function SaccoManagement() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
-                {["SACCO Name", "Reg. Number", "Location", "Members", "Officer", "Status", "Actions"].map((h) => (
+                {["SACCO Name", "Institution ID", "Reg. Number", "Location", "Members", "Officer", "Status", "Actions"].map((h) => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Loading...</td></tr>
+                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Loading...</td></tr>
               ) : saccos.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                   <Building2 className="mx-auto h-8 w-8 mb-2 opacity-50" />
                   No SACCOs found
                 </td></tr>
@@ -189,6 +212,7 @@ export default function SaccoManagement() {
                 saccos.map((sacco) => (
                   <tr key={sacco.id} className="text-sm hover:bg-accent/50 transition-colors">
                     <td className="px-4 py-3 font-medium text-foreground">{sacco.name}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-sky-500">{sacco.institutionId}</td>
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{sacco.registrationNumber}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {sacco.location}</span>
@@ -242,13 +266,28 @@ export default function SaccoManagement() {
         )}
       </div>
 
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="border-b border-border px-4 py-3 text-sm font-semibold text-foreground">Chama groups</div>
+        <div className="divide-y divide-border">
+          {chamas.map((chama) => (
+            <div key={chama.id} className="grid grid-cols-1 gap-1 px-4 py-3 text-sm sm:grid-cols-4">
+              <span className="font-medium text-foreground">{chama.name}</span>
+              <span className="font-mono text-xs text-sky-500">{chama.institutionId}</span>
+              <span className="text-muted-foreground">{chama.registrationNumber}</span>
+              <span className="text-muted-foreground">{chama.location}</span>
+            </div>
+          ))}
+          {!loading && chamas.length === 0 && <p className="px-4 py-6 text-sm text-muted-foreground">No chamas found</p>}
+        </div>
+      </div>
+
       {/* Modal Form */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-semibold text-foreground">
-                {editingSacco ? "Edit SACCO" : "Register New SACCO"}
+                {editingSacco ? "Edit SACCO" : `Register New ${formKind === "SACCO" ? "SACCO" : "Chama"}`}
               </h3>
               <button onClick={() => setShowForm(false)} className="text-muted-foreground hover:text-foreground">
                 <X className="h-5 w-5" />
@@ -256,7 +295,7 @@ export default function SaccoManagement() {
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1">SACCO Name</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">{formKind === "SACCO" ? "SACCO" : "Chama"} Name</label>
                 <input
                   type="text"
                   value={form.name}

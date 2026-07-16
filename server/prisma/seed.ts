@@ -39,7 +39,22 @@ async function main() {
   const officer = await prisma.user.findUniqueOrThrow({ where: { nationalId: "OFC001" } });
   const admin = await prisma.user.findUniqueOrThrow({ where: { nationalId: "ADM001" } });
 
-  // ── 2. Members ────────────────────────────────────────────────────────
+  // ── 2. Demo institutions ──────────────────────────────────────────────
+  // Stable IDs make every institution identifiable in transaction and fraud logs.
+  const stimaSacco = await prisma.sacco.upsert({
+    where: { registrationNumber: "SAC-STIMA-001" },
+    update: { name: "Stima Sacco", institutionId: "SAC-STIMA-001", location: "Nairobi", assignedOfficerId: officer.id },
+    create: { name: "Stima Sacco", institutionId: "SAC-STIMA-001", registrationNumber: "SAC-STIMA-001", location: "Nairobi", assignedOfficerId: officer.id },
+  });
+  const kirobonChama = await prisma.chama.upsert({
+    where: { registrationNumber: "CHA-KIROBON-001" },
+    update: { name: "Kirobon Chamaa Group", institutionId: "CHA-KIROBON-001", location: "Nairobi", assignedOfficerId: officer.id },
+    create: { name: "Kirobon Chamaa Group", institutionId: "CHA-KIROBON-001", registrationNumber: "CHA-KIROBON-001", location: "Nairobi", assignedOfficerId: officer.id },
+  });
+  console.log(`  ✓ Upserted demo SACCO: ${stimaSacco.name} (${stimaSacco.institutionId})`);
+  console.log(`  ✓ Upserted demo chama: ${kirobonChama.name} (${kirobonChama.institutionId})`);
+
+  // ── 3. Members ────────────────────────────────────────────────────────
   const memberData = [
     { memberId: "MBR001", fullName: "Alice Muthoni", email: "alice.muthoni@email.co.ke", phoneNumber: "0712345001", status: "ACTIVE" as const, balance: 85000 },
     { memberId: "MBR002", fullName: "Brian Kipchoge", email: "brian.kipchoge@email.co.ke", phoneNumber: "0712345002", status: "ACTIVE" as const, balance: 120000 },
@@ -51,13 +66,15 @@ async function main() {
     { memberId: "MBR008", fullName: "Hassan Mohamed", email: "hassan.mohamed@email.co.ke", phoneNumber: "0712345008", status: "FLAGGED" as const, balance: 5000 },
     { memberId: "MBR009", fullName: "Irene Chebet", email: "irene.chebet@email.co.ke", phoneNumber: "0712345009", status: "ACTIVE" as const, balance: 92000 },
     { memberId: "MBR010", fullName: "Joseph Kariuki", email: "joseph.kariuki@email.co.ke", phoneNumber: "0712345010", status: "ACTIVE" as const, balance: 150000 },
+    { memberId: "STIMA-DEMO-001", fullName: "Stima Sacco Demo Account", email: "demo@stimasacco.co.ke", phoneNumber: "0712345011", status: "ACTIVE" as const, balance: 500000, institutionId: "SAC-STIMA-001" },
+    { memberId: "KIROBON-DEMO-001", fullName: "Kirobon Chamaa Group Demo Account", email: "demo@kirobonchamaa.co.ke", phoneNumber: "0712345012", status: "ACTIVE" as const, balance: 250000, institutionId: "CHA-KIROBON-001" },
   ];
 
   const members: Record<string, { id: string }> = {};
   for (const m of memberData) {
     const member = await prisma.member.upsert({
       where: { memberId: m.memberId },
-      update: { fullName: m.fullName, phoneNumber: m.phoneNumber, status: m.status, balance: m.balance },
+      update: { fullName: m.fullName, phoneNumber: m.phoneNumber, status: m.status, balance: m.balance, institutionId: m.institutionId },
       create: { ...m, createdById: officer.id },
     });
     members[m.memberId] = member;

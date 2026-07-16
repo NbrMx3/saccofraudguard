@@ -191,6 +191,21 @@ export async function toggleSaccoStatus(id: string) {
   return data;
 }
 
+export async function fetchChamas(params?: { page?: number; search?: string }) {
+  const { data } = await api.get("/api/admin/chamas", { params });
+  return data;
+}
+
+export async function createChama(chamaData: {
+  name: string;
+  registrationNumber: string;
+  location: string;
+  assignedOfficerId?: string;
+}) {
+  const { data } = await api.post("/api/admin/chamas", chamaData);
+  return data;
+}
+
 // ─── Blacklist Management ───────────────────────────────────────────
 export async function fetchBlacklist(params?: { page?: number; active?: string }) {
   const { data } = await api.get("/api/admin/blacklist", { params });

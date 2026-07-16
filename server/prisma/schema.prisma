@@ -61,6 +61,7 @@ model User {
   updatedThresholds     WithdrawalThreshold[] @relation("ThresholdUpdater")
   createdUsers          User[]              @relation("CreatedByAdmin")
   assignedSaccos        Sacco[]             @relation("OfficerAssignedSacco")
+  assignedChamas        Chama[]             @relation("OfficerAssignedChama")
   blacklistEntries      BlacklistEntry[]    @relation("BlacklistedByUser")
 
   @@map("users")
@@ -74,6 +75,7 @@ model Member {
   phoneNumber String       @map("phone_number")
   status      MemberStatus @default(ACTIVE)
   balance     Float        @default(0)
+  institutionId String?    @map("institution_id")
   createdById String       @map("created_by_id")
   createdBy   User         @relation("CreatedByOfficer", fields: [createdById], references: [id])
   createdAt   DateTime     @default(now()) @map("created_at")
@@ -113,6 +115,8 @@ model Transaction {
   balanceBefore Float           @map("balance_before")
   balanceAfter  Float           @map("balance_after")
   description String?
+  sourceInstitutionId String? @map("source_institution_id")
+  destinationInstitutionId String? @map("destination_institution_id")
   status      TransactionStatus @default(COMPLETED)
   memberId    String            @map("member_id")
   member      Member            @relation(fields: [memberId], references: [id])
@@ -352,6 +356,7 @@ enum SaccoStatus {
 
 model Sacco {
   id               String      @id @default(cuid())
+  institutionId    String      @unique @default(cuid()) @map("institution_id")
   name             String      @unique
   registrationNumber String    @unique @map("registration_number")
   location         String
@@ -363,6 +368,22 @@ model Sacco {
   updatedAt        DateTime    @updatedAt @map("updated_at")
 
   @@map("saccos")
+}
+
+model Chama {
+  id                String      @id @default(cuid())
+  institutionId     String      @unique @default(cuid()) @map("institution_id")
+  name              String      @unique
+  registrationNumber String     @unique @map("registration_number")
+  location          String
+  totalMembers      Int         @default(0) @map("total_members")
+  status            SaccoStatus @default(ACTIVE)
+  assignedOfficerId String?     @map("assigned_officer_id")
+  assignedOfficer   User?       @relation("OfficerAssignedChama", fields: [assignedOfficerId], references: [id])
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  @@map("chamas")
 }
 
 // ─── Blacklist Management ───────────────────────────────────────────────

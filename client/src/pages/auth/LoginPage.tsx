@@ -28,23 +28,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickLogin = async () => {
-    setLoading(true);
-    try {
-      const quickNationalId = "ADM001";
-      const quickPassword = "Admin@2026";
-      setNationalId(quickNationalId);
-      setPassword(quickPassword);
-      await login(quickNationalId, quickPassword);
-      toast.success("Quick login successful");
-      navigate({ to: "/dashboard" });
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || "Quick login failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0a1628] px-4 relative overflow-hidden">
       <div className="absolute inset-0">
@@ -138,14 +121,6 @@ export default function LoginPage() {
               {loading ? "Entering portal..." : "Enter Portal"}
             </button>
 
-            <button
-              type="button"
-              onClick={handleQuickLogin}
-              disabled={loading}
-              className="w-full rounded-xl border border-sky-400/20 bg-sky-500/10 py-3 text-sm font-medium text-sky-300 transition-all hover:bg-sky-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Quick Login (Admin)
-            </button>
           </div>
 
           <div className="mt-6 text-center">

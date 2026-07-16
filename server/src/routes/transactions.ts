@@ -152,6 +152,72 @@ router.post(
   }
 );
 
+// POST /api/transactions/institution-transfer — transfer between SACCO/chama accounts
+router.post(
+  "/institution-transfer",
+  authenticate,
+  authorize("OFFICER", "ADMIN"),
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { sourceMemberId, destinationMemberId, amount, description } = req.body;
+      if (!sourceMemberId || !destinationMemberId || !amount || amount <= 0) {
+        res.status(400).json({ error: "Source member, destination member, and a positive amount are required" });
+        return;
+      }
+      if (sourceMemberId === destinationMemberId) {
+        res.status(400).json({ error: "Source and destination accounts must be different" });
+        return;
+      }
+
+      const [source, destination] = await Promise.all([
+        prisma.member.findUnique({ where: { id: sourceMemberId } }),
+        prisma.member.findUnique({ where: { id: destinationMemberId } }),
+      ]);
+      if (!source || !destination) { res.status(404).json({ error: "Source or destination account not found" }); return; }
+      if (!source.institutionId || !destination.institutionId) {
+        res.status(400).json({ error: "Both accounts must be assigned to an institution" });
+        return;
+      }
+      if (source.institutionId === destination.institutionId) {
+        res.status(400).json({ error: "Use the regular transaction flow for transfers within one institution" });
+        return;
+      }
+      if (source.status !== "ACTIVE" || destination.status !== "ACTIVE") {
+        res.status(403).json({ error: "Both accounts must be active" });
+        return;
+      }
+      if (source.balance < amount) { res.status(400).json({ error: "Insufficient source account balance" }); return; }
+
+      const screening = await preScreenTransaction(source.id, "WITHDRAWAL", amount);
+      const debitRef = generateTxRef("WITHDRAWAL");
+      const creditRef = generateTxRef("DEPOSIT");
+      const [debit] = await prisma.$transaction([
+        prisma.transaction.create({ data: {
+          txRef: debitRef, type: "WITHDRAWAL", amount,
+          balanceBefore: source.balance, balanceAfter: source.balance - amount,
+          description: description || `Institution transfer to ${destination.memberId}`,
+          memberId: source.id, processedById: req.user!.userId,
+          sourceInstitutionId: source.institutionId, destinationInstitutionId: destination.institutionId,
+        } }),
+        prisma.transaction.create({ data: {
+          txRef: creditRef, type: "DEPOSIT", amount,
+          balanceBefore: destination.balance, balanceAfter: destination.balance + amount,
+          description: description || `Institution transfer from ${source.memberId}`,
+          memberId: destination.id, processedById: req.user!.userId,
+          sourceInstitutionId: source.institutionId, destinationInstitutionId: destination.institutionId,
+        } }),
+        prisma.member.update({ where: { id: source.id }, data: { balance: source.balance - amount } }),
+        prisma.member.update({ where: { id: destination.id }, data: { balance: destination.balance + amount } }),
+      ]);
+      const fraudCheck = await runFraudCheck(source.id, debit.id, "WITHDRAWAL", amount);
+      res.status(201).json({ message: "Institution transfer completed", debitTransaction: debit, fraudCheck, screening });
+    } catch (error) {
+      console.error("Institution transfer error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
 // ═══════════════════════════════════════════════════════════════════
 // POST /api/transactions/loan-apply — Apply for a loan
 // ═══════════════════════════════════════════════════════════════════

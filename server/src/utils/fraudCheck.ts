@@ -147,6 +147,37 @@ export async function runFraudCheck(
   const alerts: FraudCheckResult["alerts"] = [];
   const thresholds = await getFraudThresholds();
 
+  const transaction = await prisma.transaction.findUnique({
+    where: { id: transactionId },
+    select: { sourceInstitutionId: true, destinationInstitutionId: true },
+  });
+
+  // Institution-pair monitoring: detect rapid movement between the same
+  // SACCO/chama accounts, regardless of the member initiating the transfer.
+  if (transaction?.sourceInstitutionId && transaction.destinationInstitutionId &&
+      transaction.sourceInstitutionId !== transaction.destinationInstitutionId) {
+    const windowStart = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const pairActivity = await prisma.transaction.aggregate({
+      where: {
+        createdAt: { gte: windowStart },
+        sourceInstitutionId: transaction.sourceInstitutionId,
+        destinationInstitutionId: transaction.destinationInstitutionId,
+        status: { not: "FAILED" },
+      },
+      _count: { id: true },
+      _sum: { amount: true },
+    });
+    const transferCount = pairActivity._count.id;
+    const transferVolume = pairActivity._sum.amount ?? 0;
+    if (transferCount >= 3 || transferVolume >= thresholds.dailyTransactionLimit) {
+      alerts.push({
+        type: "CROSS_INSTITUTION_VELOCITY",
+        severity: transferCount >= 3 && transferVolume >= thresholds.dailyTransactionLimit ? "CRITICAL" : "HIGH",
+        description: `${transferCount} transfers totaling KES ${transferVolume.toLocaleString()} between institution IDs ${transaction.sourceInstitutionId} and ${transaction.destinationInstitutionId} in 24 hours`,
+      });
+    }
+  }
+
   // ── Rule 1: Large transaction threshold (CONFIGURABLE) ───────────
   if (type === "DEPOSIT" && amount >= thresholds.largeDepositAmount) {
     alerts.push({
