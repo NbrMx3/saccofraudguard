@@ -15,6 +15,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      injectRegister: 'auto',
       registerType: 'autoUpdate',
       includeAssets: [
         'saccoguard.png',
@@ -114,6 +115,8 @@ export default defineConfig({
         enabled: true,
       },
       workbox: {
+        navigateFallback: '/index.html',
+        cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
