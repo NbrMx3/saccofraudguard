@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchFraudAlerts, resolveFraudAlert } from "@/services/adminService";
+import { fetchFraudAlerts, investigateFraudAlert, fetchSaccos, fetchChamas, fetchOfficers } from "@/services/adminService";
 import { AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, Shield } from "lucide-react";
 import { toast } from "sonner";
 
@@ -14,6 +14,7 @@ interface Alert {
   member: { memberId: string; fullName: string };
   transaction: { txRef: string; amount: number; type: string } | null;
   resolvedBy: { firstName: string; lastName: string } | null;
+  case?: { status: string; assignedTo: { id: string; firstName: string; lastName: string } } | null;
 }
 
 const severityColors: Record<string, string> = {
@@ -30,6 +31,10 @@ export default function FraudAlerts() {
   const [totalPages, setTotalPages] = useState(1);
   const [severityFilter, setSeverityFilter] = useState("");
   const [resolvedFilter, setResolvedFilter] = useState("");
+  const [institutionId, setInstitutionId] = useState("");
+  const [institutions, setInstitutions] = useState<Array<{ institutionId: string; name: string }>>([]);
+  const [officers, setOfficers] = useState<Array<{ id: string; firstName: string; lastName: string }>>([]);
+  const [assignedToId, setAssignedToId] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -38,6 +43,7 @@ export default function FraudAlerts() {
         page,
         severity: severityFilter || undefined,
         resolved: resolvedFilter || undefined,
+        institutionId: institutionId || undefined,
       });
       setAlerts(data.alerts);
       setTotalPages(data.pagination.totalPages);
@@ -46,18 +52,16 @@ export default function FraudAlerts() {
     } finally {
       setLoading(false);
     }
-  }, [page, severityFilter, resolvedFilter]);
+  }, [page, severityFilter, resolvedFilter, institutionId]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { (async () => { try { const [s, c, users] = await Promise.all([fetchSaccos(), fetchChamas(), fetchOfficers()]); setInstitutions([...(s.saccos || []), ...(c.chamas || [])]); setOfficers(users.officers || []); } catch { /* optional filter data */ } })(); }, []);
 
-  const handleResolve = async (id: string) => {
-    try {
-      await resolveFraudAlert(id);
-      toast.success("Alert resolved");
-      load();
-    } catch {
-      toast.error("Failed to resolve alert");
-    }
+  const investigate = async (id: string, action: "REVIEWED" | "ESCALATED" | "RESOLVED") => {
+    const notes = window.prompt("Investigation notes") || "";
+    const evidence = window.prompt("Evidence reference / link") || "";
+    try { await investigateFraudAlert(id, action, notes, evidence, assignedToId || undefined); toast.success(`${action.toLowerCase()} workflow saved and audit logged`); load(); }
+    catch { toast.error("Unable to save investigation"); }
   };
 
   return (
@@ -74,6 +78,10 @@ export default function FraudAlerts() {
           <option value="HIGH">High</option>
           <option value="CRITICAL">Critical</option>
         </select>
+        <select value={institutionId} onChange={(e) => { setInstitutionId(e.target.value); setPage(1); }} className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-sky-500/40">
+          <option value="">All institutions</option>
+          {institutions.map((institution) => <option key={institution.institutionId} value={institution.institutionId}>{institution.name} ({institution.institutionId})</option>)}
+        </select>
         <select
           value={resolvedFilter}
           onChange={(e) => { setResolvedFilter(e.target.value); setPage(1); }}
@@ -82,6 +90,10 @@ export default function FraudAlerts() {
           <option value="">All Status</option>
           <option value="false">Unresolved</option>
           <option value="true">Resolved</option>
+        </select>
+        <select value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)} className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-sky-500/40">
+          <option value="">Assign to me</option>
+          {officers.map((officer) => <option key={officer.id} value={officer.id}>{officer.firstName} {officer.lastName}</option>)}
         </select>
       </div>
 
@@ -117,6 +129,14 @@ export default function FraudAlerts() {
                     )}
                   </div>
                   <p className="text-sm text-foreground mb-2">{alert.description}</p>
+                  <div className="mb-2 grid grid-cols-1 gap-2 rounded-xl bg-accent/40 p-2 text-xs sm:grid-cols-5">
+                    <span><strong>Rule:</strong> {alert.type.replaceAll("_", " ")}</span>
+                    <span><strong>Transactions:</strong> {alert.type === "CROSS_INSTITUTION_VELOCITY" ? "3 rapid" : "1"}</span>
+                    <span><strong>Total:</strong> KES {alert.transaction?.amount ? (alert.type === "CROSS_INSTITUTION_VELOCITY" ? alert.transaction.amount * 3 : alert.transaction.amount).toLocaleString() : "—"}</span>
+                    <span><strong>Risk score:</strong> {alert.severity === "CRITICAL" ? "90+" : alert.severity === "HIGH" ? "70+" : "40+"}</span>
+                    <span><strong>Recommended:</strong> {alert.severity === "CRITICAL" || alert.severity === "HIGH" ? "Escalate & hold" : "Review evidence"}</span>
+                  </div>
+                  {alert.case && <p className="mb-2 text-xs text-sky-500">Case {alert.case.status.replaceAll("_", " ")} · Investigator: {alert.case.assignedTo.firstName} {alert.case.assignedTo.lastName}</p>}
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     <span>Member: <strong className="text-foreground">{alert.member.fullName}</strong> ({alert.member.memberId})</span>
                     {alert.transaction && (
@@ -129,12 +149,11 @@ export default function FraudAlerts() {
                   </div>
                 </div>
                 {!alert.resolved && (
-                  <button
-                    onClick={() => handleResolve(alert.id)}
-                    className="shrink-0 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-500 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                  >
-                    Resolve
-                  </button>
+                  <div className="flex shrink-0 flex-col gap-1">
+                    <button onClick={() => investigate(alert.id, "REVIEWED")} className="rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-1.5 text-xs font-medium text-sky-500">Review</button>
+                    <button onClick={() => investigate(alert.id, "ESCALATED")} className="rounded-xl border border-orange-500/20 bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-500">Escalate</button>
+                    <button onClick={() => investigate(alert.id, "RESOLVED")} className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-500">Resolve</button>
+                  </div>
                 )}
               </div>
             </div>

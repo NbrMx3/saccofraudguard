@@ -13,6 +13,7 @@ import {
 } from "../automation/automationState.js";
 import { toggleJob, triggerJob, getJobNames } from "../automation/scheduler.js";
 import { invalidateThresholdCache } from "../utils/configHelper.js";
+import { runFraudCheck } from "../utils/fraudCheck.js";
 
 const router: express.Router = express.Router();
 
@@ -219,6 +220,7 @@ router.get(
       const skip = (page - 1) * limit;
       const severity = req.query.severity as string | undefined;
       const resolved = req.query.resolved as string | undefined;
+      const institutionId = req.query.institutionId as string | undefined;
 
       const where: Record<string, unknown> = {};
       if (severity && ["LOW", "MEDIUM", "HIGH", "CRITICAL"].includes(severity)) {
@@ -226,6 +228,9 @@ router.get(
       }
       if (resolved === "true") where.resolved = true;
       if (resolved === "false") where.resolved = false;
+      if (institutionId) {
+        where.transaction = { OR: [{ sourceInstitutionId: institutionId }, { destinationInstitutionId: institutionId }] };
+      }
 
       const [alerts, total] = await Promise.all([
         prisma.fraudAlert.findMany({
@@ -234,6 +239,7 @@ router.get(
             member: { select: { memberId: true, fullName: true } },
             transaction: { select: { txRef: true, amount: true, type: true } },
             resolvedBy: { select: { firstName: true, lastName: true } },
+            case: { include: { assignedTo: { select: { id: true, firstName: true, lastName: true } } } },
           },
           orderBy: { createdAt: "desc" },
           skip,
@@ -1177,6 +1183,68 @@ router.patch(
     }
   }
 );
+
+// Run a safe, repeatable presentation scenario: three rapid Stima → Kirobon transfers.
+router.post("/demo-scenario", async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const [source, destination] = await Promise.all([
+      prisma.member.findUnique({ where: { memberId: "STIMA-DEMO-001" } }),
+      prisma.member.findUnique({ where: { memberId: "KIROBON-DEMO-001" } }),
+    ]);
+    if (!source || !destination || !source.institutionId || !destination.institutionId) {
+      res.status(400).json({ error: "Demo accounts have not been seeded" }); return;
+    }
+    const amount = 5000;
+    if (source.balance < amount * 3) { res.status(400).json({ error: "Reset the demo data before running this scenario again" }); return; }
+    const results = [];
+    for (let i = 1; i <= 3; i++) {
+      const suffix = `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+      const [debit] = await prisma.$transaction([
+        prisma.transaction.create({ data: {
+          txRef: `DEMO-WTH-${suffix}`, type: "WITHDRAWAL", amount,
+          balanceBefore: source.balance - amount * (i - 1), balanceAfter: source.balance - amount * i,
+          description: `Presentation demo transfer ${i}/3: Stima Sacco → Kirobon Chamaa Group`,
+          memberId: source.id, processedById: req.user!.userId,
+          sourceInstitutionId: source.institutionId, destinationInstitutionId: destination.institutionId,
+        } }),
+        prisma.transaction.create({ data: {
+          txRef: `DEMO-DEP-${suffix}`, type: "DEPOSIT", amount,
+          balanceBefore: destination.balance + amount * (i - 1), balanceAfter: destination.balance + amount * i,
+          description: `Presentation demo transfer ${i}/3: Stima Sacco → Kirobon Chamaa Group`,
+          memberId: destination.id, processedById: req.user!.userId,
+          sourceInstitutionId: source.institutionId, destinationInstitutionId: destination.institutionId,
+        } }),
+        prisma.member.update({ where: { id: source.id }, data: { balance: source.balance - amount * i } }),
+        prisma.member.update({ where: { id: destination.id }, data: { balance: destination.balance + amount * i } }),
+      ]);
+      results.push(await runFraudCheck(source.id, debit.id, "WITHDRAWAL", amount));
+    }
+    const triggered = results.flatMap((result) => result.alerts).filter((alert) => alert.type === "CROSS_INSTITUTION_VELOCITY");
+    await prisma.auditLog.create({ data: { action: "DEMO_SCENARIO_RUN", entity: "Transaction", details: "Three rapid Stima Sacco → Kirobon Chamaa Group transfers executed", userId: req.user!.userId, ipAddress: req.ip || req.socket.remoteAddress } });
+    res.json({ message: "Demo scenario complete", transfers: 3, totalAmount: amount * 3, alerts: triggered });
+  } catch (error) { console.error("Demo scenario error:", error); res.status(500).json({ error: "Unable to run demo scenario" }); }
+});
+
+router.post("/fraud-alerts/:id/investigate", async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const { action, notes, evidence, assignedToId } = req.body;
+    const alert = await prisma.fraudAlert.findUnique({ where: { id } });
+    if (!alert) { res.status(404).json({ error: "Alert not found" }); return; }
+    const investigatorId = assignedToId || req.user!.userId;
+    const investigator = await prisma.user.findUnique({ where: { id: investigatorId }, select: { id: true } });
+    if (!investigator) { res.status(400).json({ error: "Assigned investigator not found" }); return; }
+    const status = action === "ESCALATED" ? "ESCALATED" : action === "RESOLVED" ? "CLOSED" : "IN_PROGRESS";
+    const existingCase = await prisma.caseInvestigation.findUnique({ where: { alertId: id } });
+    const investigation = existingCase
+      ? await prisma.caseInvestigation.update({ where: { id: existingCase.id }, data: { status, assignedToId: investigatorId, findings: notes || existingCase.findings, resolution: action === "RESOLVED" ? (notes || "Resolved after investigation") : existingCase.resolution } })
+      : await prisma.caseInvestigation.create({ data: { caseRef: `CASE-${Date.now()}`, title: `Fraud alert: ${alert.type}`, description: alert.description, priority: alert.severity, alertId: id, assignedToId: investigatorId, status, findings: notes || null, resolution: action === "RESOLVED" ? (notes || "Resolved after investigation") : null } });
+    if (action === "RESOLVED" && !alert.resolved) await prisma.fraudAlert.update({ where: { id }, data: { resolved: true, resolvedById: req.user!.userId, resolvedAt: new Date() } });
+    const investigationAction = action === "ESCALATED" ? "FRAUD_ALERT_ESCALATED" : action === "RESOLVED" ? "FRAUD_ALERT_RESOLVED" : "FRAUD_ALERT_REVIEWED";
+    await prisma.auditLog.create({ data: { action: investigationAction, entity: "FraudAlert", entityId: id, details: `Investigation ${action || "REVIEWED"}. Notes: ${notes || "None"}. Evidence: ${evidence || "None"}`, userId: req.user!.userId, ipAddress: req.ip || req.socket.remoteAddress } });
+    res.json({ message: `Investigation ${status.toLowerCase()} and audit logged`, investigation });
+  } catch (error) { console.error("Investigate alert error:", error); res.status(500).json({ error: "Unable to save investigation" }); }
+});
 
 router.get(
   "/chamas",

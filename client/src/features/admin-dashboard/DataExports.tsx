@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { exportData } from "@/services/adminService";
-import { Database, FileJson, FileSpreadsheet, Loader2 } from "lucide-react";
+import { Database, FileJson, FileSpreadsheet, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const entities = [
@@ -50,8 +50,20 @@ export default function DataExports() {
     }
   };
 
+  const printFraudReport = async () => {
+    try {
+      const result = await exportData("fraud-alerts", "json");
+      const rows = result.data.map((a: any) => `<tr><td>${a.type}</td><td>${a.severity}</td><td>${a.description}</td><td>${a.resolved ? "Resolved" : "Open"}</td></tr>`).join("");
+      const report = window.open("", "_blank");
+      if (!report) return;
+      report.document.write(`<html><head><title>SaccoFraudGuard Fraud Report</title><style>body{font-family:Arial;padding:32px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:8px;text-align:left}th{background:#0f172a;color:#fff}</style></head><body><h1>SaccoFraudGuard Fraud Report</h1><p>Generated ${new Date().toLocaleString()} · ${result.count} alerts</p><table><thead><tr><th>Rule</th><th>Severity</th><th>Explanation</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table><script>window.print()</script></body></html>`);
+      report.document.close();
+    } catch { toast.error("Failed to prepare fraud report"); }
+  };
+
   return (
     <div className="space-y-6">
+      <div className="flex justify-end"><button onClick={printFraudReport} className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-white"><FileText className="h-4 w-4" /> Print Fraud Report (PDF)</button></div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {entities.map((e) => (
           <div key={e.key} className="rounded-2xl border border-border bg-card p-5 flex flex-col">

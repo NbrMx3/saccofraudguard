@@ -54,6 +54,9 @@ export default function LoginPage() {
           <p className="mt-3 text-sm text-slate-400">
             Sign in to access your dashboard
           </p>
+          <p className="mt-2 text-xs text-sky-300/80">
+            Presentation demo: Admin ID ADM001 · Stima Sacco SAC-STIMA-001 · Kirobon Chamaa Group CHA-KIROBON-001
+          </p>
         </div>
 
         {/* Form */}

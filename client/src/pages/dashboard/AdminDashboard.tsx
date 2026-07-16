@@ -20,7 +20,8 @@ import {
   Gauge,
   Brain,
 } from "lucide-react";
-import { fetchAdminStats, fetchFraudAlerts } from "@/services/adminService";
+import { fetchAdminStats, fetchFraudAlerts, runDemoScenario } from "@/services/adminService";
+import { toast } from "sonner";
 import UserManagement from "@/features/admin-dashboard/UserManagement";
 import FraudAlerts from "@/features/admin-dashboard/FraudAlerts";
 import AuditLogs from "@/features/admin-dashboard/AuditLogs";
@@ -122,6 +123,18 @@ function DashboardOverview({ onNavigate }: { onNavigate: (v: AdminView) => void 
   const [stats, setStats] = useState<Record<string, number> | null>(null);
   const [recentAlerts, setRecentAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [runningDemo, setRunningDemo] = useState(false);
+
+  const runDemo = async () => {
+    setRunningDemo(true);
+    try {
+      const result = await runDemoScenario();
+      toast.success(`${result.transfers} rapid transfers completed — cross-institution alert triggered`);
+      onNavigate("fraud");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Demo scenario could not run");
+    } finally { setRunningDemo(false); }
+  };
 
   useEffect(() => {
     (async () => {
@@ -193,6 +206,10 @@ function DashboardOverview({ onNavigate }: { onNavigate: (v: AdminView) => void 
             <h3 className="text-sm font-semibold text-foreground">Quick Actions</h3>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <button onClick={runDemo} disabled={runningDemo} className="flex flex-col items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 p-4 hover:bg-red-500/10 transition-colors disabled:opacity-50">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl text-red-500 bg-red-500/10"><AlertTriangle className="h-5 w-5" /></div>
+              <span className="text-xs font-medium text-foreground">{runningDemo ? "Running..." : "Run Fraud Demo"}</span>
+            </button>
             {[
               { label: "Manage Users", icon: Users, view: "users" as AdminView, color: "text-blue-500 dark:text-blue-400 bg-blue-500/10" },
               { label: "View Alerts", icon: AlertTriangle, view: "fraud" as AdminView, color: "text-red-500 dark:text-red-400 bg-red-500/10" },
@@ -258,10 +275,10 @@ function DashboardOverview({ onNavigate }: { onNavigate: (v: AdminView) => void 
       {/* System overview */}
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Active Members", value: stats?.activeMembers || 0, color: "text-emerald-500 dark:text-emerald-400" },
-          { label: "Total Members", value: stats?.totalMembers || 0, color: "text-sky-500 dark:text-sky-400" },
-          { label: "Total Alerts", value: stats?.totalFraudAlerts || 0, color: "text-amber-500 dark:text-amber-400" },
-          { label: "System Users", value: stats?.totalUsers || 0, color: "text-violet-500 dark:text-violet-400" },
+          { label: "Transactions Monitored", value: stats?.totalTransactions || 0, color: "text-emerald-500 dark:text-emerald-400" },
+          { label: "Fraud Prevented", value: stats?.flaggedTransactions || 0, color: "text-red-500 dark:text-red-400" },
+          { label: "High-risk Institutions", value: recentAlerts.filter((a) => ["HIGH", "CRITICAL"].includes(a.severity)).length, color: "text-amber-500 dark:text-amber-400" },
+          { label: "Avg. Detection Time", value: "Real-time", color: "text-violet-500 dark:text-violet-400" },
         ].map((item) => (
           <div key={item.label} className="rounded-2xl border border-border bg-card p-4 text-center">
             <p className={`text-2xl font-bold ${item.color}`}>{item.value.toLocaleString()}</p>

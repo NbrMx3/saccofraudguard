@@ -48,7 +48,7 @@ export async function fetchUserLoginHistory(id: string) {
 }
 
 // ─── Fraud Alerts ───────────────────────────────────────────────────
-export async function fetchFraudAlerts(params?: { page?: number; severity?: string; resolved?: string }) {
+export async function fetchFraudAlerts(params?: { page?: number; severity?: string; resolved?: string; institutionId?: string }) {
   const { data } = await api.get("/api/admin/fraud-alerts", { params });
   return data;
 }
@@ -188,6 +188,16 @@ export async function updateSacco(id: string, updates: Record<string, unknown>) 
 
 export async function toggleSaccoStatus(id: string) {
   const { data } = await api.patch(`/api/admin/saccos/${id}/toggle-status`);
+  return data;
+}
+
+export async function runDemoScenario() {
+  const { data } = await api.post("/api/admin/demo-scenario");
+  return data;
+}
+
+export async function investigateFraudAlert(id: string, action: "REVIEWED" | "ESCALATED" | "RESOLVED", notes: string, evidence: string, assignedToId?: string) {
+  const { data } = await api.post(`/api/admin/fraud-alerts/${id}/investigate`, { action, notes, evidence, assignedToId });
   return data;
 }
 
