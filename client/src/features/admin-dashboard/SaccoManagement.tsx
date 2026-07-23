@@ -176,7 +176,7 @@ export default function SaccoManagement() {
           />
         </div>
         <button
-          onClick={openCreate}
+          onClick={() => openCreate()}
           className="flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-sky-700 transition-colors"
         >
           <Plus className="h-4 w-4" /> Register SACCO

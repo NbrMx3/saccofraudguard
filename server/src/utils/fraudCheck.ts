@@ -157,18 +157,17 @@ export async function runFraudCheck(
   if (transaction?.sourceInstitutionId && transaction.destinationInstitutionId &&
       transaction.sourceInstitutionId !== transaction.destinationInstitutionId) {
     const windowStart = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const pairActivity = await prisma.transaction.aggregate({
-      where: {
-        createdAt: { gte: windowStart },
-        sourceInstitutionId: transaction.sourceInstitutionId,
-        destinationInstitutionId: transaction.destinationInstitutionId,
-        status: { not: "FAILED" },
-      },
-      _count: { id: true },
-      _sum: { amount: true },
-    });
-    const transferCount = pairActivity._count.id;
-    const transferVolume = pairActivity._sum.amount ?? 0;
+    const where = {
+      createdAt: { gte: windowStart },
+      sourceInstitutionId: transaction.sourceInstitutionId,
+      destinationInstitutionId: transaction.destinationInstitutionId,
+      status: { not: "FAILED" as const },
+    };
+    const [transferCount, transferTotals] = await Promise.all([
+      prisma.transaction.count({ where }),
+      prisma.transaction.aggregate({ where, _sum: { amount: true } }),
+    ]);
+    const transferVolume = transferTotals._sum.amount ?? 0;
     if (transferCount >= 3 || transferVolume >= thresholds.dailyTransactionLimit) {
       alerts.push({
         type: "CROSS_INSTITUTION_VELOCITY",
