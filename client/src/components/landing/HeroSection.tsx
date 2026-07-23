@@ -49,7 +49,7 @@ export default function HeroSection() {
 
             {/* Headline */}
             <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl xl:text-7xl leading-[1.1]">
-              Intelligent Fraud Detection for{' '}
+              Intelligent Fraud Pattern Detection for{' '}
               <span className="relative">
                 <span className="bg-linear-to-r from-cyan-400 via-teal-300 to-cyan-500 bg-clip-text text-transparent">
                   SACCOs & Chamas
