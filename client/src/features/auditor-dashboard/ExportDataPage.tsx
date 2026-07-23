@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { exportData } from "@/services/auditorService";
-import { Download, FileSpreadsheet, Loader2, AlertTriangle, History, FileText, ClipboardCheck, Users } from "lucide-react";
+import { Download, FileText, Loader2, AlertTriangle, History, ClipboardCheck, Users } from "lucide-react";
 import { toast } from "sonner";
 
 const EXPORT_OPTIONS = [
   { entity: "audit-reviews", label: "Audit Reviews", description: "All audit review records with findings and status", icon: FileText },
   { entity: "fraud-alerts", label: "Fraud Alerts", description: "All fraud alert records with member and transaction details", icon: AlertTriangle },
-  { entity: "transactions", label: "Transactions", description: "All transaction records (up to 5,000)", icon: FileSpreadsheet },
+  { entity: "transactions", label: "Transactions", description: "All transaction records (up to 5,000)", icon: FileText },
   { entity: "investigations", label: "Investigations", description: "Case investigation records with assignments", icon: ClipboardCheck },
   { entity: "audit-trail", label: "Audit Trail", description: "System activity logs (up to 5,000)", icon: History },
   { entity: "compliance-reports", label: "Compliance Reports", description: "Generated compliance reports", icon: FileText },
@@ -32,7 +32,7 @@ export default function ExportDataPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold text-foreground">Export Data</h2>
-        <p className="text-sm text-muted-foreground">Download system data as CSV files for external analysis and reporting</p>
+        <p className="text-sm text-muted-foreground">Download system data as PDF reports for external analysis and reporting</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -58,7 +58,7 @@ export default function ExportDataPage() {
                 ) : (
                   <Download className="h-4 w-4" />
                 )}
-                {isLoading ? "Exporting..." : "Download CSV"}
+                {isLoading ? "Exporting..." : "Download PDF"}
               </button>
             </div>
           );
@@ -68,7 +68,7 @@ export default function ExportDataPage() {
       <div className="rounded-2xl border border-border bg-card p-6">
         <h3 className="text-sm font-semibold text-foreground mb-2">Export Notes</h3>
         <ul className="text-xs text-muted-foreground space-y-1.5 list-disc list-inside">
-          <li>Files are exported in CSV (comma-separated values) format compatible with Excel, Google Sheets, and other tools.</li>
+          <li>Files are exported as PDF reports, ready to review, share, or print.</li>
           <li>Large datasets (transactions, audit trail) are limited to 5,000 rows per export.</li>
           <li>All exports are logged in the audit trail for compliance tracking.</li>
           <li>Data is exported as-is from the database. Sensitive fields are not redacted.</li>

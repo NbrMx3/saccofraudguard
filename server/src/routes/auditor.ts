@@ -21,6 +21,65 @@ async function logAction(
   });
 }
 
+function escapePdfText(value: unknown): string {
+  return String(value ?? "")
+    .replace(/\\/g, "\\\\")
+    .replace(/\(/g, "\\(")
+    .replace(/\)/g, "\\)")
+    .replace(/[\r\n]+/g, " ")
+    .replace(/[^\x20-\x7E]/g, "?");
+}
+
+function createExportPdf(title: string, headers: string[], rows: string[][]): Buffer {
+  const pageWidth = 792;
+  const pageHeight = 612;
+  const margin = 36;
+  const rowHeight = 16;
+  const columnWidth = (pageWidth - margin * 2) / headers.length;
+  const rowsPerPage = Math.floor((pageHeight - 118) / rowHeight);
+  const pages: string[] = [];
+
+  for (let start = 0; start < Math.max(rows.length, 1); start += rowsPerPage) {
+    const pageRows = rows.slice(start, start + rowsPerPage);
+    const lines = ["BT", "/F1 16 Tf", `${margin} ${pageHeight - margin} Td`, `(${escapePdfText(title)}) Tj`, "/F1 9 Tf", "0 -18 Td", `(Generated ${new Date().toISOString().slice(0, 10)} | ${rows.length} records) Tj`, "ET"];
+    const renderRow = (cells: string[], y: number, bold = false) => {
+      lines.push("BT", `/F${bold ? "2" : "1"} 7 Tf`);
+      cells.forEach((cell, index) => {
+        const truncated = escapePdfText(cell).slice(0, Math.max(8, Math.floor(columnWidth / 4.2)));
+        lines.push(`1 0 0 1 ${margin + index * columnWidth} ${y} Tm (${truncated}) Tj`);
+      });
+      lines.push("ET");
+    };
+    renderRow(headers, pageHeight - 82, true);
+    pageRows.forEach((row, index) => renderRow(row, pageHeight - 98 - index * rowHeight));
+    if (pageRows.length === 0) renderRow(["No records found", ...Array(headers.length - 1).fill("")], pageHeight - 98);
+    pages.push(lines.join("\n"));
+  }
+
+  const objects: string[] = ["<< /Type /Catalog /Pages 2 0 R >>", ""];
+  const pageNumbers = pages.map((_, index) => 3 + index * 2);
+  objects[1] = `<< /Type /Pages /Kids [${pageNumbers.map((number) => `${number} 0 R`).join(" ")}] /Count ${pages.length} >>`;
+  pages.forEach((content, index) => {
+    const pageNumber = pageNumbers[index];
+    const contentNumber = pageNumber + 1;
+    objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 ${3 + pages.length * 2} 0 R /F2 ${4 + pages.length * 2} 0 R >> >> /Contents ${contentNumber} 0 R >>`);
+    objects.push(`<< /Length ${Buffer.byteLength(content, "utf8")} >>\nstream\n${content}\nendstream`);
+  });
+  objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
+
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  objects.forEach((object, index) => {
+    offsets.push(Buffer.byteLength(pdf, "utf8"));
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+  const xrefOffset = Buffer.byteLength(pdf, "utf8");
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  offsets.slice(1).forEach((offset) => { pdf += `${String(offset).padStart(10, "0")} 00000 n \n`; });
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  return Buffer.from(pdf, "utf8");
+}
+
 // ─── 1. AUDIT REVIEWS ─────────────────────────────────────────────────────
 
 // GET /audit-reviews — list with filters
@@ -331,7 +390,7 @@ router.patch("/compliance-reports/:id", async (req: AuthRequest, res: Response) 
 });
 
 // ─── 7. EXPORT DATA ─────────────────────────────────────────────────────
-// GET /export/:entity — export CSV data
+// GET /export/:entity — export PDF data
 router.get("/export/:entity", async (req: AuthRequest, res: Response) => {
   try {
     const entity = req.params.entity as string;
@@ -443,13 +502,12 @@ router.get("/export/:entity", async (req: AuthRequest, res: Response) => {
         return;
     }
 
-    const csv = [headers.join(","), ...data.map((row) => row.map((c: string) => `"${c}"`).join(","))].join("\n");
-
     await logAction(req.user!.userId, "EXPORT_DATA", entity, undefined, `Exported ${data.length} rows`, req.ip);
 
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", `attachment; filename="${entity}-export-${new Date().toISOString().slice(0, 10)}.csv"`);
-    res.send(csv);
+    const title = `${entity.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase())} Export`;
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${entity}-export-${new Date().toISOString().slice(0, 10)}.pdf"`);
+    res.send(createExportPdf(title, headers, data));
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }

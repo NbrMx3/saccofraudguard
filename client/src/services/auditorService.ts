@@ -173,11 +173,11 @@ export async function updateComplianceReport(id: string, body: { title?: string;
 // Export Data
 export async function exportData(entity: string): Promise<void> {
   const response = await api.get(`/api/auditor/export/${entity}`, { responseType: "blob" });
-  const blob = new Blob([response.data], { type: "text/csv" });
+  const blob = new Blob([response.data], { type: "application/pdf" });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${entity}-export-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `${entity}-export-${new Date().toISOString().slice(0, 10)}.pdf`;
   document.body.appendChild(a);
   a.click();
   window.URL.revokeObjectURL(url);
