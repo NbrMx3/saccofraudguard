@@ -1184,6 +1184,65 @@ router.patch(
   }
 );
 
+// Permanently delete an unused user account. Operational records are retained;
+// users with linked records must be deactivated instead.
+router.delete(
+  "/users/:id",
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+
+      if (id === req.user!.userId) {
+        res.status(400).json({ error: "You cannot delete your own account" });
+        return;
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id },
+        select: { id: true, firstName: true, lastName: true, email: true, role: true },
+      });
+      if (!user) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+
+      if (user.role === "ADMIN") {
+        const adminCount = await prisma.user.count({ where: { role: "ADMIN", isActive: true } });
+        if (adminCount <= 1) {
+          res.status(400).json({ error: "The last active administrator cannot be deleted" });
+          return;
+        }
+      }
+
+      try {
+        await prisma.user.delete({ where: { id } });
+      } catch (error: unknown) {
+        if (typeof error === "object" && error !== null && "code" in error && error.code === "P2003") {
+          res.status(409).json({ error: "This user has associated operational records and must be deactivated instead" });
+          return;
+        }
+        throw error;
+      }
+
+      await prisma.auditLog.create({
+        data: {
+          action: "USER_DELETED",
+          entity: "User",
+          entityId: id,
+          details: `Deleted user ${user.firstName} ${user.lastName} (${user.email})`,
+          userId: req.user!.userId,
+          ipAddress: req.ip || req.socket.remoteAddress,
+        },
+      });
+
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
 // Run a safe, repeatable presentation scenario: three rapid Stima → Kirobon transfers.
 router.post("/demo-scenario", async (req: AuthRequest, res: Response): Promise<void> => {
   try {

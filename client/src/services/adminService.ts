@@ -22,6 +22,11 @@ export async function changeUserRole(id: string, role: string) {
   return data;
 }
 
+export async function deleteUser(id: string) {
+  const { data } = await api.delete(`/api/admin/users/${id}`);
+  return data;
+}
+
 // ─── Create User ────────────────────────────────────────────────────
 export async function createUser(userData: {
   nationalId: string;

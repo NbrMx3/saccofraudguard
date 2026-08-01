@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { fetchUsers, toggleUserActive, changeUserRole, createUser, resetUserPassword, fetchUserLoginHistory } from "@/services/adminService";
-import { Search, UserCog, Ban, CheckCircle, ChevronLeft, ChevronRight, Plus, X, KeyRound, Clock } from "lucide-react";
+import { fetchUsers, toggleUserActive, changeUserRole, createUser, resetUserPassword, fetchUserLoginHistory, deleteUser } from "@/services/adminService";
+import { Search, UserCog, Ban, CheckCircle, ChevronLeft, ChevronRight, Plus, X, KeyRound, Clock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface User {
@@ -32,6 +32,8 @@ export default function UserManagement() {
   const [historyModal, setHistoryModal] = useState<{ id: string; name: string } | null>(null);
   const [loginHistory, setLoginHistory] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -118,6 +120,21 @@ export default function UserManagement() {
       toast.error("Failed to load login history");
     } finally {
       setHistoryLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteModal) return;
+    setDeleting(true);
+    try {
+      const data = await deleteUser(deleteModal.id);
+      toast.success(data.message);
+      setDeleteModal(null);
+      load();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Failed to delete user");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -242,6 +259,13 @@ export default function UserManagement() {
                         >
                           <Clock className="h-4 w-4" />
                         </button>
+                        <button
+                          onClick={() => setDeleteModal({ id: user.id, name: `${user.firstName} ${user.lastName}` })}
+                          className="rounded-lg p-1.5 text-red-500 hover:bg-red-500/10 transition-colors"
+                          title="Delete User"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -352,6 +376,31 @@ export default function UserManagement() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete User Confirmation */}
+      {deleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-foreground">Delete User</h3>
+              <button onClick={() => setDeleteModal(null)} disabled={deleting} className="text-muted-foreground hover:text-foreground disabled:opacity-50">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-5">
+              Permanently delete <span className="font-medium text-foreground">{deleteModal.name}</span>? This cannot be undone. Users with associated operational records must be deactivated instead.
+            </p>
+            <div className="flex gap-3">
+              <button type="button" onClick={() => setDeleteModal(null)} disabled={deleting}
+                className="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50 transition-colors">Cancel</button>
+              <button type="button" onClick={handleDeleteUser} disabled={deleting}
+                className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors">
+                {deleting ? "Deleting..." : "Delete User"}
+              </button>
+            </div>
           </div>
         </div>
       )}
