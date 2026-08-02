@@ -21,7 +21,6 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (nationalId: string, password: string) => Promise<void>;
-  signup: (data: SignupData) => Promise<string>;
   logout: () => Promise<void>;
   forgotPassword: (nationalId: string, email: string) => Promise<string>;
   resetPassword: (
@@ -29,13 +28,6 @@ interface AuthContextType {
     password: string,
     confirmPassword: string
   ) => Promise<string>;
-}
-
-interface SignupData {
-  nationalId: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -78,11 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   };
 
-  const signup = async (signupData: SignupData): Promise<string> => {
-    const { data } = await api.post("/api/auth/signup", signupData);
-    return data.message;
-  };
-
   const logout = async () => {
     try {
       await api.post("/api/auth/logout");
@@ -123,7 +110,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isLoading,
         login,
-        signup,
         logout,
         forgotPassword,
         resetPassword,

@@ -71,12 +71,6 @@ export default function Navbar() {
             >
               Enter Portal
             </Link>
-            <Link
-              to="/signup"
-              className="rounded-xl bg-linear-to-r from-cyan-500 to-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 transition-all hover:from-cyan-400 hover:to-teal-500 hover:shadow-cyan-500/40 active:scale-[0.98]"
-            >
-              Get Started
-            </Link>
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -116,18 +110,12 @@ export default function Navbar() {
               Install App
             </button>
           )}
-          <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/5 mt-3">
+          <div className="pt-4 border-t border-white/5 mt-3">
             <Link
               to="/login"
-              className="rounded-xl border border-white/10 px-4 py-2.5 text-center text-sm font-medium text-slate-300 hover:text-white hover:border-white/20 transition-colors"
+              className="block rounded-xl border border-white/10 px-4 py-2.5 text-center text-sm font-medium text-slate-300 hover:text-white hover:border-white/20 transition-colors"
             >
               Enter Portal
-            </Link>
-            <Link
-              to="/signup"
-              className="rounded-xl bg-linear-to-r from-cyan-500 to-teal-600 px-4 py-2.5 text-center text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-400 hover:to-teal-500 transition-colors"
-            >
-              Get Started
             </Link>
           </div>
         </div>

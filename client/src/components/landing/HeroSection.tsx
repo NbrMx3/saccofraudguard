@@ -1,4 +1,4 @@
-import { ArrowRight, Shield, Activity } from 'lucide-react'
+import { Shield, Activity } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import CyberBackground from '@/components/ui/CyberBackground'
 import FloatingIcons from '@/components/ui/FloatingIcons'
@@ -66,15 +66,8 @@ export default function HeroSection() {
             {/* CTA Buttons */}
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <Link
-                to="/signup"
-                className="group inline-flex items-center justify-center gap-2.5 rounded-2xl bg-linear-to-r from-cyan-500 to-teal-600 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-cyan-500/20 transition-all hover:shadow-cyan-500/40 hover:from-cyan-400 hover:to-teal-500 active:scale-[0.98]"
-              >
-                Get Started
-                <ArrowRight className="h-4.5 w-4.5 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-              <Link
                 to="/login"
-                className="group inline-flex items-center justify-center gap-2.5 rounded-2xl border border-cyan-400/20 bg-white/5 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:border-cyan-400/40 hover:bg-white/10 active:scale-[0.98]"
+                className="group inline-flex items-center justify-center gap-2.5 rounded-2xl bg-linear-to-r from-cyan-500 to-teal-600 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-cyan-500/20 transition-all hover:shadow-cyan-500/40 hover:from-cyan-400 hover:to-teal-500 active:scale-[0.98]"
               >
                 <Shield className="h-4.5 w-4.5 text-cyan-400" />
                 Enter Portal
