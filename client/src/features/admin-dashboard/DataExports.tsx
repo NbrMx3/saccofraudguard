@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { exportData } from "@/services/adminService";
-import { Database, FileJson, FileSpreadsheet, FileText, Loader2 } from "lucide-react";
+import { Database, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const entities = [
@@ -16,24 +16,11 @@ export default function DataExports() {
   const [downloading, setDownloading] = useState<string | null>(null);
   const [previewData, setPreviewData] = useState<{ entity: string; data: unknown[]; count: number } | null>(null);
 
-  const handleExport = async (entity: string, format: "json" | "csv") => {
-    setDownloading(`${entity}-${format}`);
+  const handleExport = async (entity: string) => {
+    setDownloading(entity);
     try {
-      if (format === "csv") {
-        await exportData(entity, "csv");
-        toast.success(`${entity} exported as CSV`);
-      } else {
-        const result = await exportData(entity, "json");
-        // Download as JSON file
-        const blob = new Blob([JSON.stringify(result.data, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${entity}-export-${new Date().toISOString().slice(0, 10)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast.success(`${entity} exported as JSON (${result.count} records)`);
-      }
+      await exportData(entity, "pdf");
+      toast.success(`${entity} exported as a PDF`);
     } catch {
       toast.error(`Failed to export ${entity}`);
     } finally {
@@ -77,19 +64,11 @@ export default function DataExports() {
             <div className="flex gap-2 mt-auto pt-3">
               <button
                 disabled={downloading !== null}
-                onClick={() => handleExport(e.key, "json")}
+                onClick={() => handleExport(e.key)}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-accent transition-colors disabled:opacity-50"
               >
-                {downloading === `${e.key}-json` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileJson className="h-3.5 w-3.5" />}
-                JSON
-              </button>
-              <button
-                disabled={downloading !== null}
-                onClick={() => handleExport(e.key, "csv")}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-accent transition-colors disabled:opacity-50"
-              >
-                {downloading === `${e.key}-csv` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSpreadsheet className="h-3.5 w-3.5" />}
-                CSV
+                {downloading === e.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                Download PDF
               </button>
               <button
                 onClick={() => handlePreview(e.key)}

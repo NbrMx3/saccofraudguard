@@ -130,17 +130,17 @@ export async function markNotificationRead(id: string) {
 }
 
 // ─── Data Exports ───────────────────────────────────────────────────
-export async function exportData(entity: string, format: "json" | "csv" = "json") {
-  if (format === "csv") {
+export async function exportData(entity: string, format: "json" | "pdf" = "json") {
+  if (format === "pdf") {
     const response = await api.get(`/api/admin/export/${entity}`, {
-      params: { format: "csv" },
+      params: { format: "pdf" },
       responseType: "blob",
     });
-    const blob = new Blob([response.data], { type: "text/csv" });
+    const blob = new Blob([response.data], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${entity}-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `${entity}-export-${new Date().toISOString().slice(0, 10)}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
     return { message: "Download started" };

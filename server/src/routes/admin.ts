@@ -17,6 +17,52 @@ import { runFraudCheck } from "../utils/fraudCheck.js";
 
 const router: express.Router = express.Router();
 
+/** Build a compact, dependency-free PDF for administrative data exports. */
+function createExportPdf(title: string, data: Record<string, unknown>[]): Buffer {
+  // Built-in PDF fonts use a single-byte encoding, so retain a valid document
+  // when record values contain characters outside that encoding.
+  const escapePdfText = (value: string) => value.replace(/[^\x20-\x7E]/g, "?").replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+  const stringify = (value: unknown) => {
+    if (value === null || value === undefined) return "";
+    if (value instanceof Date) return value.toISOString();
+    if (typeof value === "object") return Object.values(value as Record<string, unknown>).join(" / ");
+    return String(value);
+  };
+  const wrap = (line: string, maxLength = 104) =>
+    line.match(new RegExp(`.{1,${maxLength}}(?:\\s|$)|\\S+?(?:\\s|$)`, "g"))?.map((part) => part.trim()) ?? [line];
+
+  const headers = data.length ? Object.keys(data[0]) : [];
+  const lines = [title, `Generated: ${new Date().toISOString()}`, `${data.length} record${data.length === 1 ? "" : "s"}`, "", headers.join(" | ")];
+  for (const row of data) {
+    lines.push(...wrap(headers.map((header) => stringify(row[header])).join(" | ")));
+  }
+
+  const pages: string[][] = [];
+  for (let index = 0; index < lines.length; index += 48) pages.push(lines.slice(index, index + 48));
+  if (!pages.length) pages.push([title, "Generated: " + new Date().toISOString(), "0 records"]);
+
+  const objects: string[] = ["<< /Type /Catalog /Pages 2 0 R >>", ""];
+  const pageIds = pages.map((_, index) => 3 + index * 2);
+  objects[1] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pages.length} >>`;
+  pages.forEach((page, index) => {
+    const pageId = pageIds[index];
+    const contentId = pageId + 1;
+    const content = `BT\n/F1 9 Tf\n40 800 Td\n${page.map((line, lineIndex) => `${lineIndex ? "0 -15 Td\\n" : ""}(${escapePdfText(line)}) Tj`).join("\n")}\nET`;
+    objects[pageId - 1] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> /Contents ${contentId} 0 R >>`;
+    objects[contentId - 1] = `<< /Length ${Buffer.byteLength(content, "utf8")} >>\nstream\n${content}\nendstream`;
+  });
+
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  objects.forEach((object, index) => {
+    offsets.push(Buffer.byteLength(pdf, "utf8"));
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+  const xrefOffset = Buffer.byteLength(pdf, "utf8");
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map((offset) => `${String(offset).padStart(10, "0")} 00000 n `).join("\n")}\ntrailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  return Buffer.from(pdf, "utf8");
+}
+
 // All admin routes require ADMIN role
 router.use(authenticate, authorize("ADMIN"));
 
@@ -610,7 +656,7 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { entity } = req.params;
-      const format = (req.query.format as string) || "json";
+      const format = (req.query.format as string) || "pdf";
 
       let data: unknown[] = [];
       let filename = "";
@@ -695,49 +741,19 @@ router.get(
         },
       });
 
-      if (format === "csv") {
-        if (data.length === 0) {
-          res.setHeader("Content-Type", "text/csv");
-          res.setHeader("Content-Disposition", `attachment; filename=${filename}.csv`);
-          res.send("");
-          return;
-        }
-        // Flatten nested objects for CSV
-        const flattenRow = (row: Record<string, unknown>): Record<string, unknown> => {
-          const flat: Record<string, unknown> = {};
-          for (const [key, val] of Object.entries(row)) {
-            if (val && typeof val === "object" && !(val instanceof Date)) {
-              for (const [nk, nv] of Object.entries(val as Record<string, unknown>)) {
-                flat[`${key}_${nk}`] = nv;
-              }
-            } else {
-              flat[key] = val;
-            }
-          }
-          return flat;
-        };
-        const flatData = (data as Record<string, unknown>[]).map(flattenRow);
-        const headers = Object.keys(flatData[0]);
-        const csvRows = [
-          headers.join(","),
-          ...flatData.map((row) =>
-            headers
-              .map((h) => {
-                const v = row[h];
-                const str = v === null || v === undefined ? "" : String(v);
-                return str.includes(",") || str.includes('"')
-                  ? `"${str.replace(/"/g, '""')}"`
-                  : str;
-              })
-              .join(",")
-          ),
-        ];
-        res.setHeader("Content-Type", "text/csv");
-        res.setHeader("Content-Disposition", `attachment; filename=${filename}.csv`);
-        res.send(csvRows.join("\n"));
-      } else {
+      if (format === "json") {
         res.json({ data, count: data.length });
+        return;
       }
+
+      if (format !== "pdf") {
+        res.status(400).json({ error: "Only PDF exports are supported" });
+        return;
+      }
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename=${filename}-export-${new Date().toISOString().slice(0, 10)}.pdf`);
+      res.send(createExportPdf(`${filename.replace(/-/g, " ").toUpperCase()} EXPORT`, data as Record<string, unknown>[]));
     } catch (error) {
       console.error("Export error:", error);
       res.status(500).json({ error: "Internal server error" });
